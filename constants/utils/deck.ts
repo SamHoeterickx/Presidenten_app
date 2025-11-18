@@ -1,0 +1,30 @@
+import { DeckType } from "../types";
+
+const SUITS = ['spades', 'hearts', 'diamonds', 'clubs'];
+const RANKS = ['3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A', '2'];
+
+// Geef een power aan elke kaart
+// 3 krijgt power 1, 4 krijgt power 2, 2 krijgt power 13
+const getPower = (rank:string) => {
+    return RANKS.indexOf(rank) + 1
+} 
+
+export const createDeck = () => {
+    const deck:DeckType[]  = [];
+    let idCounter = 0;
+
+    SUITS.forEach( suit => {
+        RANKS.forEach( rank => {
+            deck.push({
+                id: `${suit}-${rank}`,
+                suit: suit,
+                rank: rank,
+                power: getPower(rank),
+                isSelected: false,
+                imageName: `${suit}_${rank}`
+            });
+        });
+    });
+
+    return deck;
+}

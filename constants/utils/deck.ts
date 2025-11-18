@@ -11,7 +11,6 @@ const getPower = (rank:string) => {
 
 export const createDeck = () => {
     const deck:DeckType[]  = [];
-    let idCounter = 0;
 
     SUITS.forEach( suit => {
         RANKS.forEach( rank => {
@@ -27,4 +26,17 @@ export const createDeck = () => {
     });
 
     return deck;
+}
+
+export const shuffleDeck = (deck:DeckType[]) => {
+    const newDeck = [...deck];
+
+    // Fisher-Yates Shuffle
+    for(let i = newDeck.length-1; i > 0; i--){
+        const j = Math.floor(Math.random() * (i * 1));
+        [newDeck[i], newDeck[j]] = [newDeck[j], newDeck[i]];    
+    }
+
+    return newDeck;
+    
 }

@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { FlatList, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 //Utils
 import { createDeck, shuffleDeck } from "@/constants/utils";
+
+//Types
 import { DeckType } from "@/constants/types";
+import Card from "@/components/card/Card";
 
 export default function Game(){
 
@@ -27,41 +30,63 @@ export default function Game(){
         const playerOneCards = shuffledDeck.slice(0, half);
         const playerTwoCards = shuffledDeck.slice(half);
 
-        setPlayerHand(playerOneCards);
+        const playerOneSortedCards = playerOneCards.sort((a, b) => (
+            a.power - b.power
+        ));
+
+        setPlayerHand(playerOneSortedCards);
         setOpponentHand(playerTwoCards);
         setPile([]);
         setIsGameLoaded(true);
+    };
+
+    const handleCardTap = (tappedCard:DeckType) => {
+        const updatedHand = playerHand.map(card => {
+            if (card.id === tappedCard.id) {
+                return { ...card, isSelected: !card.isSelected };
+            }
+            return card;
+        });
+        setPlayerHand(updatedHand);
     }
+
 
     if(!isGameLoaded) return <SafeAreaView><Text>Shuffeling cards...</Text></SafeAreaView>
 
     return (
         <SafeAreaView style={styles.container}>
-        <View style={styles.gameTable}>
-            
-            {/* OPPONENT AREA */}
-            <View style={styles.opponentArea}>
-                <Text>Opponent Cards: {opponentHand.length}</Text>
-            </View>
+            <View style={styles.gameTable}>
+                
+                {/* OPPONENT AREA */}
+                <View style={styles.opponentArea}>
+                    <Text>Opponent Cards: {opponentHand.length}</Text>
+                </View>
 
-            {/* PILE AREA (Middle) */}
-            <View style={styles.pileArea}>
-                <Text style={styles.pileText}>
-                    {pile.length === 0 ? "Empty Pile" : "Cards on table: " + pile.length}
-                </Text>
-            </View>
+                {/* PILE AREA (Middle) */}
+                <View style={styles.pileArea}>
+                    <Text style={styles.pileText}>
+                        {pile.length === 0 ? "Empty Pile" : "Cards on table: " + pile.length}
+                    </Text>
+                </View>
 
-            {/* PLAYER AREA */}
-            <View style={styles.playerArea}>
-                <Text>My Cards: {playerHand.length}</Text>
-                {/* TEMPORARY: Just list the first 3 cards as text to prove it works */}
-                <Text>
-                    {playerHand.slice(0, 3).map(c => `${c.suit} ${c.rank}, `)}
-                    ...
-                </Text>
+                {/* PLAYER AREA */}
+                <View style={styles.playerArea}>
+                    <FlatList
+                        data={playerHand}
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={{ paddingLeft: 20, paddingRight: 20, paddingTop: 20 }}
+                        keyExtractor={(item) => item.id}
+                        renderItem={({ item }) => (
+                            <Card
+                                card={item} 
+                                onPress={handleCardTap} 
+                            />
+                        )}
+                    />
+                </View>
+                
             </View>
-            
-        </View>
         </SafeAreaView>
     );
 }

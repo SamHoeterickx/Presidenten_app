@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { FlatList, StyleSheet, Text, TouchableOpacity, View, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 //Components
@@ -10,77 +10,141 @@ import { dealNewGame, validateMove } from "@/constants/utils";
 
 //Types
 import { DeckType } from "@/constants/types";
+import { getBestMove } from "@/constants/utils/ai";
 
 const POWER_2 = 13;
 
 export default function Game(){
 
-    const [playerHand, setPlayerHand] = useState<DeckType[]>([]);
-    const [opponentHand, setOpponentHand] = useState<DeckType[]>([]);
+    // --- STATE ---
+    const [playerOneCards, setPlayerOneCards] = useState<DeckType[]>([]);
+    const [playerTwoCards, setPlayerTwoCards] = useState<DeckType[]>([]);
     const [pile, setPile] = useState<DeckType[]>([]);
     const [isGameLoaded, setIsGameLoaded] = useState(false);
+    
+    // 0 = Player, 1 = Opponent
+    const [currentTurn, setCurrentTurn] = useState(0); 
 
-    //0 = player, 1 = opponent
-    const [currentTurn, setCurrentTurn] = useState(0);
-
+    // --- SETUP ---
     useEffect(() => {
         startGame();
     }, []);
 
     const startGame = () => {
-        
-        const { playerOneCards, playerTwoCards }= dealNewGame();
-
-        setPlayerHand(playerOneCards);
-        setOpponentHand(playerTwoCards);
+        const { playerOneCards, playerTwoCards } = dealNewGame();
+        setPlayerOneCards(playerOneCards);
+        setPlayerTwoCards(playerTwoCards);
 
         setPile([]);
         setIsGameLoaded(true);
+
+        setCurrentTurn(0);
+
+        //TODO Logic for start with spade 3
     };
 
-    const handlePlay = () => {
-        const selectedCards = playerHand.filter(card => card.isSelected);
+    // --- PLAYER ACTIONS ---
 
-        const { isValid, message } = validateMove(selectedCards, pile)
+    const handleCardTap = (tappedCard: DeckType) => {
+        // Only allow selecting cards if it is YOUR turn
+        if (currentTurn !== 0) return; 
 
-        if(!isValid){
-            alert(message);
-            return
-        };
-
-        if(selectedCards[0].power === POWER_2){
-            setPile([]);
-            setCurrentTurn(currentTurn);
-        }else{
-            setPile(selectedCards);
-            setCurrentTurn(1);
-        }
-
-        //Update Players hand
-        const remainingCards = playerHand.filter(card => !card.isSelected);
-        setPlayerHand(remainingCards);
-
-        setTimeout(() => handleOpponentTurn(), 1000);
-    }
-
-    const handleOpponentTurn = () => {
-        setCurrentTurn(0);
-    }
-
-    const handlePassTurn = () => {
-        setCurrentTurn(1);
-        setTimeout(() => handleOpponentTurn(), 1000);
-    }
-
-    const handleCardTap = (tappedCard:DeckType) => {
-        const updatedHand = playerHand.map(card => {
+        const updatedHand = playerOneCards.map(card => {
             if (card.id === tappedCard.id) {
                 return { ...card, isSelected: !card.isSelected };
             }
             return card;
         });
-        setPlayerHand(updatedHand);
+        setPlayerOneCards(updatedHand);
     }
+
+    const handlePlay = () => {
+        if (currentTurn !== 0) return;
+
+        const selectedCards = playerOneCards.filter(card => card.isSelected);
+
+        const { isValid, message } = validateMove(selectedCards, pile);
+        if (!isValid) {
+            Alert.alert("Invalid Move", message);
+            return;
+        }
+
+        const remainingCards = playerOneCards.filter(card => !card.isSelected);
+        setPlayerOneCards(remainingCards);
+
+        if(remainingCards.length === 0){
+            setPile(selectedCards);
+
+            Alert.alert("Victory!", "You are the President!", [{
+                text: 'Play Again',
+                onPress: startGame
+            }]);
+            return;
+        }
+
+        const newPile = selectedCards;
+        const isBurn = selectedCards[0].power === POWER_2;
+
+        if (isBurn) {
+            setPile([]); 
+            setCurrentTurn(0); 
+        } else {
+            setPile(newPile);
+            setCurrentTurn(1);
+            setTimeout(() => handleOpponentTurn(newPile), 1000);
+        }
+    }
+
+    const handlePassTurn = () => {
+        if (currentTurn !== 0) return;
+
+        Alert.alert("Pass", "You passed. Opponent wins this round and leads.");
+
+        setPile([]); 
+        setCurrentTurn(1);
+        
+        setTimeout(() => handleOpponentTurn([]), 1000);
+    }
+
+    // --- AI LOGIC ---
+
+    const handleOpponentTurn = (currentPile: DeckType[]) => {
+        
+        const cardsToPlay = getBestMove(playerTwoCards, currentPile);
+
+        if (cardsToPlay === null) {
+            // AI PASSES
+
+            Alert.alert("Round Over", "Opponent passed! It is your turn to lead.");
+            
+            setPile([]); 
+            setCurrentTurn(0);
+        }else {
+            //AI PLAYS
+
+            const isBurn = cardsToPlay[0].power === POWER_2;
+
+            if (isBurn) {
+                setPile([]);
+                setCurrentTurn(1);
+            } else {
+                setPile(cardsToPlay);
+                setCurrentTurn(0);
+            }
+
+            // Update AI Hand
+            const playedCards = cardsToPlay.map(card => card.id);
+            const newHand = playerTwoCards.filter(card => !playedCards.includes(card.id));
+            setPlayerTwoCards(newHand);
+
+            if (newHand.length === 0) {
+                Alert.alert("Defeat", "Opponent is the President!", [{
+                    text: 'Try again',
+                    onPress: startGame
+                }]);
+            }
+        }
+    };
 
 
     if(!isGameLoaded) return <SafeAreaView><Text>Shuffeling cards...</Text></SafeAreaView>
@@ -91,7 +155,7 @@ export default function Game(){
                 
                 {/* OPPONENT AREA */}
                 <View style={styles.opponentArea}>
-                    <Text>Opponent Cards: {opponentHand.length}</Text>
+                    <Text>Opponent Cards: {playerTwoCards.length}</Text>
                 </View>
 
                 {/* PILE AREA (Middle) */}
@@ -132,7 +196,7 @@ export default function Game(){
                 {/* PLAYER AREA */}
                 <View style={styles.playerArea}>
                     <FlatList
-                        data={playerHand}
+                        data={playerOneCards}
                         horizontal
                         showsHorizontalScrollIndicator={false}
                         contentContainerStyle={{ paddingLeft: 20, paddingRight: 20, paddingTop: 20 }}

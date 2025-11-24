@@ -42,22 +42,30 @@ export default function Game(){
         const { playerOneCards, playerTwoCards } = dealNewGame();
         setPlayerOneCards(playerOneCards);
         setPlayerTwoCards(playerTwoCards);
-
+        setIsGamePhase(phase);
         setPile([]);
-        if(standings.president === null && standings.shit === null && phase === 'PLAYING'){
-            setIsGamePhase('PLAYING');
 
-            const mayStart = playerTwoCards.find(card => card.rank === '3' && card.suit === 'spades');
-            if(!mayStart){
-                setCurrentTurn(0);
-            }else {
+        if (standings.president === null && standings.shit === null) {
+            const opponentStarts = playerTwoCards.find(card => card.rank === '3' && card.suit === 'spades');
+
+            if (opponentStarts) {
                 setCurrentTurn(1);
-                handleOpponentTurn(pile);
+                handleOpponentTurn([]);
+            } else {
+                setCurrentTurn(0);
             }
-        }else{ if(phase === 'EXCHANGE')
-            setIsGamePhase("EXCHANGE");
+        }else {
+            if (phase === 'PLAYING') {
+                    const presidentStarts = standings.president === 'player';
+                
+                    if (presidentStarts) {
+                        setCurrentTurn(0);
+                    } else {
+                        setCurrentTurn(1);
+                        handleOpponentTurn([]); 
+                    }
+            }
         }
-    
     };
 
     // --- PLAYER ACTIONS ---

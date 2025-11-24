@@ -6,7 +6,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Card from "@/components/card/Card";
 
 //Utils
-import { dealNewGame, validateMove } from "@/constants/utils";
+import { dealNewGame, executeExchange, validateMove } from "@/constants/utils";
 
 //Types
 import { DeckType } from "@/constants/types";
@@ -107,6 +107,7 @@ export default function Game(){
                         president: 'player',
                         shit: 'opponent'
                     });
+                    
                     startGame();
                 }
             }]);
@@ -185,8 +186,31 @@ export default function Game(){
     };
 
     // --- EXCHANGE LOGIC ---
-    const handleExchangeCards = (cards:DeckType[]) => {
+    const handleExchangeCards = () => {
+        const result = executeExchange(
+            playerOneCards, 
+            playerTwoCards, 
+            standings.president === 'player'
+        );
 
+        if (!result.success || !result.newPlayerHand || !result.newOpponentHand) {
+            Alert.alert("Fout", result.message);
+            return;
+        }
+
+        // State Updates
+        setPlayerOneCards(result.newPlayerHand);
+        setPlayerTwoCards(result.newOpponentHand);
+        setIsGamePhase('PLAYING');
+
+        if (standings.shit === 'player') {
+            setCurrentTurn(0); 
+            Alert.alert("Start", "Jij bent Shit. Jij mag beginnen!");
+        } else {
+            setCurrentTurn(1);
+            Alert.alert("Start", "Tegenstander is Shit en mag beginnen.");
+            setTimeout(() => handleOpponentTurn([]), 1500);
+        }
     }
 
 
@@ -226,24 +250,50 @@ export default function Game(){
 
                 {
                     isGamePhase === 'EXCHANGE' && (
-                        <></>
+                        <View style={ styles.exchangeTextContainer }>
+                            <Text style={ styles.exchangeHeading }>EXCHANGE CARDS</Text>
+                            {
+                                standings.president === "player" ? (
+                                    <Text style={ styles.exchangeText } >{ `YOU ARE THE PRESIDENT, GIVE YOUR 2 WORST CARDS TO ${standings.shit?.toUpperCase()}` }</Text>
+                                ):(
+                                    <Text style={ styles.exchangeText } >{ `YOU ARE THE SHIT, GIVE YOUR 2 BEST CARDS TO ${standings.president?.toUpperCase()}` }</Text>
+                                )
+                            }
+                        </View>
                     )
                 }
 
                 <View style={styles.actionArea}>
-                    <TouchableOpacity 
-                        style={[styles.btn, styles.btnPass]} 
-                        onPress={handlePassTurn}
-                    >
-                        <Text style={styles.btnText}>PASS</Text>
-                    </TouchableOpacity>
+                    {
+                        isGamePhase === 'PLAYING' && (
+                            <>
+                                <TouchableOpacity 
+                                    style={[styles.btn, styles.btnPass]} 
+                                    onPress={handlePassTurn}
+                                >
+                                    <Text style={styles.btnText}>PASS</Text>
+                                </TouchableOpacity>
 
-                    <TouchableOpacity 
-                        style={[styles.btn, styles.btnPlay]} 
-                        onPress={handlePlay}
-                    >
-                        <Text style={styles.btnText}>PLAY SELECTED</Text>
-                    </TouchableOpacity>
+                                <TouchableOpacity 
+                                    style={[styles.btn, styles.btnPlay]} 
+                                    onPress={handlePlay}
+                                >
+                                    <Text style={styles.btnText}>PLAY SELECTED</Text>
+                                </TouchableOpacity>
+                            </>
+                        )
+                    }
+
+                    {
+                        isGamePhase === 'EXCHANGE' && (
+                            <TouchableOpacity 
+                                style={[styles.btn, styles.btnPlay]} 
+                                onPress={handleExchangeCards}
+                            >
+                                <Text style={styles.btnText}>EXCHANGE SELECTED CARDS</Text>
+                            </TouchableOpacity>
+                        )
+                    }
                 </View>
 
                 {/* PLAYER AREA */}
@@ -337,5 +387,20 @@ const styles = StyleSheet.create({
         // We use absolute positioning relative to the pile container
         // so they stack on top of each other centered
         transform: [{ scale: 0.8 }], // Make pile cards slightly smaller
+    },
+    exchangeTextContainer:{
+        alignContent: 'center',
+        justifyContent: 'center',
+    },
+    exchangeHeading: {
+        fontSize: 24,
+        textAlign: 'center',
+        fontWeight: 700,
+        color: '#FFF'
+    },
+    exchangeText: {
+        fontSize: 18,
+        textAlign: 'center',
+        color: '#FFF'
     }
 });

@@ -56,3 +56,48 @@ export const dealNewGame = () => {
         playerTwoCards
     }
 }
+
+export const executeExchange = (playerHand:DeckType[], opponentHand:DeckType[], isPlayerPresident:boolean) => {
+    let playerGivenCards: DeckType[] = [];
+    let opponentGivenCards: DeckType[] = [];
+
+    const sortCards = (cards: DeckType[]) => [...cards].sort((a, b) => a.power - b.power);
+    
+    const sortedPlayer = sortCards(playerHand);
+    const sortedOpponent = sortCards(opponentHand);
+
+    if (isPlayerPresident) {
+        // --- PLAYER PRESIDENT ---
+        const selectedCards = playerHand.filter(card => card.isSelected);
+        
+        if (selectedCards.length !== 2) {
+            return { success: false, message: "Kies exact 2 kaarten om weg te geven." };
+        }
+
+        playerGivenCards = selectedCards;
+        opponentGivenCards = sortedOpponent.slice(-2);
+    } else {
+        // --- PLAYER SHIT ---
+        playerGivenCards = sortedPlayer.slice(-2);
+        opponentGivenCards = sortedOpponent.slice(0, 2);
+    }
+
+    // --- EXCHANGE ---
+    const playerGivenIds = playerGivenCards.map(card => card.id);
+    const opponentGivenIds = opponentGivenCards.map(card => card.id);
+
+    let newPlayerHand = playerHand.filter(card => !playerGivenIds.includes(card.id));
+    let newOpponentHand = opponentHand.filter(card => !opponentGivenIds.includes(card.id));
+
+    newPlayerHand = [...newPlayerHand, ...opponentGivenCards];
+    newOpponentHand = [...newOpponentHand, ...playerGivenCards];
+
+    newPlayerHand = sortCards(newPlayerHand).map(card => ({ ...card, isSelected: false }));
+    newOpponentHand = sortCards(newOpponentHand);
+
+    return { 
+        success: true, 
+        newPlayerHand, 
+        newOpponentHand 
+    };
+}

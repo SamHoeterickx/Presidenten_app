@@ -1,2 +1,2 @@
-export { createDeck, shuffleDeck, dealNewGame } from './deck';
+export { createDeck, shuffleDeck, dealNewGame, executeExchange } from './deck';
 export { validateMove } from './rules';

@@ -1,1 +1,1 @@
-export { createDeck, shuffleDeck } from './deck';
+export { createDeck, shuffleDeck, validateMove } from './deck';

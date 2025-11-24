@@ -2,15 +2,18 @@ import { useEffect, useState } from "react";
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+//Components
+import Card from "@/components/card/Card";
+
 //Utils
-import { createDeck, shuffleDeck } from "@/constants/utils";
+import { createDeck, shuffleDeck, validateMove } from "@/constants/utils";
 
 //Types
 import { DeckType } from "@/constants/types";
-import Card from "@/components/card/Card";
+
+const POWER_2 = 13;
 
 export default function Game(){
-
 
     const [playerHand, setPlayerHand] = useState<DeckType[]>([]);
     const [opponentHand, setOpponentHand] = useState<DeckType[]>([]);
@@ -46,33 +49,24 @@ export default function Game(){
     const handlePlay = () => {
         const selectedCards = playerHand.filter(card => card.isSelected);
 
-        //Check if there are cards selected
-        if(selectedCards.length === 0){
-            alert('Please select a card first');
-            return;
+        const { isValid, message } = validateMove(selectedCards, pile)
+
+        if(!isValid){
+            alert(message);
+            return
         };
 
-        // Check power if the power of all selected cards are the same
-        if(selectedCards.length > 1){
-            const firstPower = selectedCards[0].power;
-            const allMatch = selectedCards.every(card => card.power === firstPower) || selectedCards.filter(card => card.power === firstPower || card.power === 13);
-
-            if(!allMatch){
-                alert('not the same cards');
-                return;
-            };
+        if(selectedCards[0].power === POWER_2){
+            setPile([]);
+            setCurrentTurn(currentTurn);
+        }else{
+            setPile(selectedCards);
+            setCurrentTurn(1);
         }
-
-        //TODO Check if power of selected cards is higher then last power on the pile
-
-
-        setPile(selectedCards);
 
         //Update Players hand
         const remainingCards = playerHand.filter(card => !card.isSelected);
         setPlayerHand(remainingCards);
-
-        setCurrentTurn(1);
 
         setTimeout(() => handleOpponentTurn(), 1000);
     }

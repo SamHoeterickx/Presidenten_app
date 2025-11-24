@@ -38,5 +38,21 @@ export const shuffleDeck = (deck:DeckType[]) => {
     }
 
     return newDeck;
-    
+}
+
+export const dealNewGame = () => {
+    const deck = createDeck();
+    const shuffledDeck = shuffleDeck(deck);
+
+    const halfDeck = Math.ceil(shuffledDeck.length / 2);
+    const playerOneCards = shuffledDeck.slice(0, halfDeck);
+    const playerTwoCards = shuffledDeck.slice(halfDeck);
+
+    playerOneCards.sort((a, b) => a.power - b.power);
+    playerTwoCards.sort((a, b) => a.power - b.power);
+
+    return {
+        playerOneCards,
+        playerTwoCards
+    }
 }

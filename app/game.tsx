@@ -6,7 +6,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Card from "@/components/card/Card";
 
 //Utils
-import { createDeck, shuffleDeck, validateMove } from "@/constants/utils";
+import { dealNewGame, validateMove } from "@/constants/utils";
 
 //Types
 import { DeckType } from "@/constants/types";
@@ -28,20 +28,12 @@ export default function Game(){
     }, []);
 
     const startGame = () => {
-        const playDeck = createDeck();
-        const shuffledDeck = shuffleDeck(playDeck);
+        
+        const { playerOneCards, playerTwoCards }= dealNewGame();
 
-        const half = Math.ceil(shuffledDeck.length / 2);
-
-        const playerOneCards = shuffledDeck.slice(0, half);
-        const playerTwoCards = shuffledDeck.slice(half);
-
-        const playerOneSortedCards = playerOneCards.sort((a, b) => (
-            a.power - b.power
-        ));
-
-        setPlayerHand(playerOneSortedCards);
+        setPlayerHand(playerOneCards);
         setOpponentHand(playerTwoCards);
+
         setPile([]);
         setIsGameLoaded(true);
     };

@@ -11,6 +11,10 @@ import { dealNewGame, validateMove } from "@/constants/utils";
 //Types
 import { DeckType } from "@/constants/types";
 import { getBestMove } from "@/constants/utils/ai";
+interface StandingProps {
+    president: 'player' | 'opponent' | null,
+    shit: 'player' | 'opponent' | null
+}
 
 const POWER_2 = 13;
 
@@ -20,7 +24,11 @@ export default function Game(){
     const [playerOneCards, setPlayerOneCards] = useState<DeckType[]>([]);
     const [playerTwoCards, setPlayerTwoCards] = useState<DeckType[]>([]);
     const [pile, setPile] = useState<DeckType[]>([]);
-    const [isGameLoaded, setIsGameLoaded] = useState(false);
+    const [isGamePhase, setIsGamePhase] = useState<'INITIALIZING' | 'EXCHANGE' | 'PLAYING' | 'GAME_OVER'>('INITIALIZING');
+    const [standings, setStandings] = useState<StandingProps>({
+        president: null,
+        shit: null
+    });
     
     // 0 = Player, 1 = Opponent
     const [currentTurn, setCurrentTurn] = useState(0); 
@@ -36,7 +44,11 @@ export default function Game(){
         setPlayerTwoCards(playerTwoCards);
 
         setPile([]);
-        setIsGameLoaded(true);
+        if(standings.president === null && standings.shit === null){
+            setIsGamePhase('PLAYING');
+        }else{
+            setIsGamePhase('EXCHANGE');
+        }
 
         setCurrentTurn(0);
 
@@ -47,7 +59,19 @@ export default function Game(){
 
     const handleCardTap = (tappedCard: DeckType) => {
         // Only allow selecting cards if it is YOUR turn
-        if (currentTurn !== 0) return; 
+        const isMyTurn = isGamePhase === 'PLAYING' && currentTurn === 0;
+        const isExchanging = isGamePhase === 'EXCHANGE' && standings.president === 'player';
+
+        if (!isMyTurn && !isExchanging) return;
+
+        if(isExchanging){
+            const currentSelected = playerOneCards.filter(card => card.isSelected).length;
+
+            if (currentSelected >= 2 && !tappedCard.isSelected) {
+                Alert.alert("Let op", "Je mag maar 2 kaarten weggeven.");
+                return;
+            }
+        }
 
         const updatedHand = playerOneCards.map(card => {
             if (card.id === tappedCard.id) {
@@ -77,7 +101,14 @@ export default function Game(){
 
             Alert.alert("Victory!", "You are the President!", [{
                 text: 'Play Again',
-                onPress: startGame
+                onPress: () => {
+                    setIsGamePhase('GAME_OVER');
+                    setStandings({
+                        president: 'player',
+                        shit: 'opponent'
+                    });
+                    startGame();
+                }
             }]);
             return;
         }
@@ -132,7 +163,14 @@ export default function Game(){
             if (newHand.length === 0) {
                 Alert.alert("Defeat", "Opponent is the President!", [{
                     text: 'Try again',
-                    onPress: startGame
+                    onPress: () => {
+                        setIsGamePhase('GAME_OVER')
+                        setStandings({
+                            president: 'opponent',
+                            shit: 'player'
+                        })
+                        startGame();
+                    }
                 }]);
             }
 
@@ -146,8 +184,13 @@ export default function Game(){
         }
     };
 
+    // --- EXCHANGE LOGIC ---
+    const handleExchangeCards = (cards:DeckType[]) => {
 
-    if(!isGameLoaded) return <SafeAreaView><Text>Shuffeling cards...</Text></SafeAreaView>
+    }
+
+
+    if(isGamePhase === 'INITIALIZING') return <SafeAreaView><Text>Shuffeling cards...</Text></SafeAreaView>
 
     return (
         <SafeAreaView style={styles.container}>
@@ -159,23 +202,33 @@ export default function Game(){
                 </View>
 
                 {/* PILE AREA (Middle) */}
-                <View style={styles.pileArea}>
-                    {
-                        pile.length > 0 ? (
-                            <View style={styles.pileContainer}>
-                                {
-                                    pile.map((card, index) => (
-                                        <View key={card.id} style={[styles.pileCard, { left: index * 20 }]}>
-                                            <Card card={card} onPress={() => {}} /> 
-                                        </View>
-                                    ))
-                                }
-                            </View>
-                        ) : (
-                            <Text style={styles.pileText}>Empty Pile</Text>
-                        )
-                    }
-                </View>
+                {
+                    isGamePhase === 'PLAYING' && (
+                        <View style={styles.pileArea}>
+                            {
+                                pile.length > 0 ? (
+                                    <View style={styles.pileContainer}>
+                                        {
+                                            pile.map((card, index) => (
+                                                <View key={card.id} style={[styles.pileCard, { left: index * 20 }]}>
+                                                    <Card card={card} onPress={() => {}} /> 
+                                                </View>
+                                            ))
+                                        }
+                                    </View>
+                                ) : (
+                                    <Text style={styles.pileText}>Empty Pile</Text>
+                                )
+                            }
+                        </View>
+                    )
+                }
+
+                {
+                    isGamePhase === 'EXCHANGE' && (
+                        <></>
+                    )
+                }
 
                 <View style={styles.actionArea}>
                     <TouchableOpacity 

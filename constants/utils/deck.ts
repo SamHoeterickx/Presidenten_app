@@ -71,7 +71,7 @@ export const executeExchange = (playerHand:DeckType[], opponentHand:DeckType[], 
         const selectedCards = playerHand.filter(card => card.isSelected);
         
         if (selectedCards.length !== 2) {
-            return { success: false, message: "Kies exact 2 kaarten om weg te geven." };
+            return { success: false, message: "CHOOSE 2 CARDS TO GIVE AWAY." };
         }
 
         playerGivenCards = selectedCards;
@@ -86,6 +86,7 @@ export const executeExchange = (playerHand:DeckType[], opponentHand:DeckType[], 
     const playerGivenIds = playerGivenCards.map(card => card.id);
     const opponentGivenIds = opponentGivenCards.map(card => card.id);
 
+
     let newPlayerHand = playerHand.filter(card => !playerGivenIds.includes(card.id));
     let newOpponentHand = opponentHand.filter(card => !opponentGivenIds.includes(card.id));
 
@@ -94,6 +95,11 @@ export const executeExchange = (playerHand:DeckType[], opponentHand:DeckType[], 
 
     newPlayerHand = sortCards(newPlayerHand).map(card => ({ ...card, isSelected: false }));
     newOpponentHand = sortCards(newOpponentHand);
+
+    console.log(opponentHand)
+    console.log(opponentGivenIds);
+    console.log(newOpponentHand)
+
 
     return { 
         success: true, 

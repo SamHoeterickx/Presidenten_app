@@ -31,32 +31,36 @@ export default function Game(){
     });
     
     // 0 = Player, 1 = Opponent
-    const [currentTurn, setCurrentTurn] = useState(0); 
+    const [currentTurn, setCurrentTurn] = useState<undefined | number>(undefined); 
 
     // --- SETUP ---
     useEffect(() => {
-        startGame();
+        startGame('PLAYING');
     }, []);
 
-    const startGame = () => {
+    const startGame = (phase: 'INITIALIZING' | 'EXCHANGE' | 'PLAYING' | 'GAME_OVER') => {
         const { playerOneCards, playerTwoCards } = dealNewGame();
         setPlayerOneCards(playerOneCards);
         setPlayerTwoCards(playerTwoCards);
 
         setPile([]);
-        if(standings.president === null && standings.shit === null){
+        if(standings.president === null && standings.shit === null && phase === 'PLAYING'){
             setIsGamePhase('PLAYING');
-        }else{
-            setIsGamePhase('EXCHANGE');
+
+            const mayStart = playerTwoCards.find(card => card.rank === '3' && card.suit === 'spades');
+            if(!mayStart){
+                setCurrentTurn(0);
+            }else {
+                setCurrentTurn(1);
+                handleOpponentTurn(pile);
+            }
+        }else{ if(phase === 'EXCHANGE')
+            setIsGamePhase("EXCHANGE");
         }
-
-        setCurrentTurn(0);
-
-        //TODO Logic for start with spade 3
+    
     };
 
     // --- PLAYER ACTIONS ---
-
     const handleCardTap = (tappedCard: DeckType) => {
         // Only allow selecting cards if it is YOUR turn
         const isMyTurn = isGamePhase === 'PLAYING' && currentTurn === 0;
@@ -108,7 +112,7 @@ export default function Game(){
                         shit: 'opponent'
                     });
                     
-                    startGame();
+                    startGame('EXCHANGE');
                 }
             }]);
             return;
@@ -139,7 +143,6 @@ export default function Game(){
     }
 
     // --- AI LOGIC ---
-
     const handleOpponentTurn = (currentPile: DeckType[]) => {
         
         const cardsToPlay = getBestMove(playerTwoCards, currentPile);
@@ -170,7 +173,7 @@ export default function Game(){
                             president: 'opponent',
                             shit: 'player'
                         })
-                        startGame();
+                        startGame('EXCHANGE');
                     }
                 }]);
             }
@@ -205,10 +208,10 @@ export default function Game(){
 
         if (standings.shit === 'player') {
             setCurrentTurn(0); 
-            Alert.alert("Start", "Jij bent Shit. Jij mag beginnen!");
+            Alert.alert("Start", "YOU'RE SHIT, YOU CAN START.");
         } else {
             setCurrentTurn(1);
-            Alert.alert("Start", "Tegenstander is Shit en mag beginnen.");
+            Alert.alert("Start", "OPPONENT IS SHIT AND MAY START.");
             setTimeout(() => handleOpponentTurn([]), 1500);
         }
     }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { FlatList, StyleSheet, Text, View } from "react-native";
+import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 //Utils
@@ -14,8 +14,11 @@ export default function Game(){
 
     const [playerHand, setPlayerHand] = useState<DeckType[]>([]);
     const [opponentHand, setOpponentHand] = useState<DeckType[]>([]);
-    const [pile, setPile] = useState([]);
+    const [pile, setPile] = useState<DeckType[]>([]);
     const [isGameLoaded, setIsGameLoaded] = useState(false);
+
+    //0 = player, 1 = opponent
+    const [currentTurn, setCurrentTurn] = useState(0);
 
     useEffect(() => {
         startGame();
@@ -39,6 +42,42 @@ export default function Game(){
         setPile([]);
         setIsGameLoaded(true);
     };
+
+    const handlePlay = () => {
+        const selectedCards = playerHand.filter(card => card.isSelected);
+
+        if(selectedCards.length === 0){
+            alert('Please select a card first');
+            return;
+        };
+        if(selectedCards.length > 1){
+            const firstPower = selectedCards[0].power;
+            const allMatch = selectedCards.every(card => card.power === firstPower);
+
+            if(!allMatch){
+                alert('not the same cards');
+                return;
+            };
+        }
+
+        setPile(selectedCards);
+
+        const remainingCards = playerHand.filter(card => !card.isSelected);
+        setPlayerHand(remainingCards);
+
+        setCurrentTurn(1);
+
+        setTimeout(() => handleOpponentTurn(), 1000);
+    }
+
+    const handleOpponentTurn = () => {
+        setCurrentTurn(0);
+    }
+
+    const handlePassTurn = () => {
+        setCurrentTurn(1);
+        setTimeout(() => handleOpponentTurn(), 1000);
+    }
 
     const handleCardTap = (tappedCard:DeckType) => {
         const updatedHand = playerHand.map(card => {
@@ -64,9 +103,37 @@ export default function Game(){
 
                 {/* PILE AREA (Middle) */}
                 <View style={styles.pileArea}>
-                    <Text style={styles.pileText}>
-                        {pile.length === 0 ? "Empty Pile" : "Cards on table: " + pile.length}
-                    </Text>
+                    {
+                        pile.length > 0 ? (
+                            <View style={styles.pileContainer}>
+                                {
+                                    pile.map((card, index) => (
+                                        <View key={card.id} style={[styles.pileCard, { left: index * 20 }]}>
+                                            <Card card={card} onPress={() => {}} /> 
+                                        </View>
+                                    ))
+                                }
+                            </View>
+                        ) : (
+                            <Text style={styles.pileText}>Empty Pile</Text>
+                        )
+                    }
+                </View>
+
+                <View style={styles.actionArea}>
+                    <TouchableOpacity 
+                        style={[styles.btn, styles.btnPass]} 
+                        onPress={handlePassTurn}
+                    >
+                        <Text style={styles.btnText}>PASS</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity 
+                        style={[styles.btn, styles.btnPlay]} 
+                        onPress={handlePlay}
+                    >
+                        <Text style={styles.btnText}>PLAY SELECTED</Text>
+                    </TouchableOpacity>
                 </View>
 
                 {/* PLAYER AREA */}
@@ -125,5 +192,40 @@ const styles = StyleSheet.create({
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
         minHeight: 150,
+    },
+    actionArea: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        gap: 20,
+        marginVertical: 10,
+    },
+    btn: {
+        paddingVertical: 12,
+        paddingHorizontal: 24,
+        borderRadius: 25,
+        elevation: 5,
+        minWidth: 100,
+        alignItems: 'center',
+    },
+    btnPlay: {
+        backgroundColor: '#FFD700',
+    },
+    btnPass: {
+        backgroundColor: '#A9A9A9',
+    },
+    btnText: {
+        fontWeight: 'bold',
+        color: '#333',
+    },
+    // Styles to make the pile look good
+    pileContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    pileCard: {
+        // We use absolute positioning relative to the pile container
+        // so they stack on top of each other centered
+        transform: [{ scale: 0.8 }], // Make pile cards slightly smaller
     }
 });

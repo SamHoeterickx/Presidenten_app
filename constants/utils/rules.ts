@@ -27,6 +27,7 @@ export const validateMove = (selectedCards:DeckType[], pile:DeckType[]): Validat
         const basePower = nonWildcards[0].power;
         const allMatch = nonWildcards.every(card => card.power === basePower);
 
+        //RULE A: all cards must match
         if (!allMatch) {
             return { 
                 isValid: false, 
@@ -39,6 +40,7 @@ export const validateMove = (selectedCards:DeckType[], pile:DeckType[]): Validat
 
     const pilePower = pile[0].power;
 
+    //RULE B: You need to have the same amount of cards or higher
     if (playPower !== POWER_2 && selectedCards.length !== pile.length) {
         return { 
             isValid: false, 
@@ -46,6 +48,7 @@ export const validateMove = (selectedCards:DeckType[], pile:DeckType[]): Validat
         };
     }
 
+    //RULE C: You always need to lay a higher card except when the card is a 7
     if (pilePower === POWER_7) {
         if (playPower >= POWER_7 && playPower !== POWER_2) {
             return { 

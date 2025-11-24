@@ -46,7 +46,7 @@ export const validateMove = (selectedCards:DeckType[], pile:DeckType[]): Validat
     const pilePower = pile[0].power;
 
     //RULE B: You need to have the same amount of cards or higher
-    if (playPower !== POWER_2 && selectedCards.length < pile.length) {
+    if (selectedCards.length < pile.length) {
         return { 
             isValid: false, 
             message: `You must play ${pile.length} or more cards` 

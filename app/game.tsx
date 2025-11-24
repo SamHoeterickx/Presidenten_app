@@ -124,14 +124,6 @@ export default function Game(){
 
             const isBurn = cardsToPlay[0].power === POWER_2;
 
-            if (isBurn) {
-                setPile([]);
-                setCurrentTurn(1);
-            } else {
-                setPile(cardsToPlay);
-                setCurrentTurn(0);
-            }
-
             // Update AI Hand
             const playedCards = cardsToPlay.map(card => card.id);
             const newHand = playerTwoCards.filter(card => !playedCards.includes(card.id));
@@ -142,6 +134,14 @@ export default function Game(){
                     text: 'Try again',
                     onPress: startGame
                 }]);
+            }
+
+            setPile(cardsToPlay);
+            
+            if (isBurn) {
+                setCurrentTurn(0);
+            } else {
+                setCurrentTurn(0);
             }
         }
     };

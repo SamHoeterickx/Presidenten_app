@@ -46,13 +46,16 @@ export default function Game(){
     const handlePlay = () => {
         const selectedCards = playerHand.filter(card => card.isSelected);
 
+        //Check if there are cards selected
         if(selectedCards.length === 0){
             alert('Please select a card first');
             return;
         };
+
+        // Check power if the power of all selected cards are the same
         if(selectedCards.length > 1){
             const firstPower = selectedCards[0].power;
-            const allMatch = selectedCards.every(card => card.power === firstPower);
+            const allMatch = selectedCards.every(card => card.power === firstPower) || selectedCards.filter(card => card.power === firstPower || card.power === 13);
 
             if(!allMatch){
                 alert('not the same cards');
@@ -60,8 +63,12 @@ export default function Game(){
             };
         }
 
+        //TODO Check if power of selected cards is higher then last power on the pile
+
+
         setPile(selectedCards);
 
+        //Update Players hand
         const remainingCards = playerHand.filter(card => !card.isSelected);
         setPlayerHand(remainingCards);
 

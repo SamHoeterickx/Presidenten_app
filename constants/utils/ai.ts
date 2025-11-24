@@ -29,13 +29,10 @@ export const getBestMove = (hand:DeckType[], pile:DeckType[]): DeckType[]| null 
         }
     });
 
-    // 4. Choose the BEST move
-    // Strategy: Play the LOWEST power valid move to save high cards for later.
     if (potentialMoves.length === 0) {
-        return null; // No moves? PASS.
+        return null;
     }
 
-    // Sort moves by power (lowest first)
     potentialMoves.sort((a, b) => a[0].power - b[0].power);
 
     return potentialMoves[0];

@@ -8,5 +8,6 @@ export interface PlayerProps {
     name: string,
     hand: DeckType[],
     role: PlayerRoles,
-    hasPassed: boolean
+    hasPassed: boolean,
+    finishedRank: number | null
 }

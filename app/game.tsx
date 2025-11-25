@@ -11,6 +11,7 @@ import { dealNewGame, executeExchange, validateMove } from "@/constants/utils";
 //Types
 import { DeckType, PlayerProps } from "@/constants/types";
 import { getBestMove } from "@/constants/utils/ai";
+import { getNextActivePlayer } from "@/constants/utils/game";
 interface StandingProps {
     president: 'player' | 'opponent' | null,
     shit: 'player' | 'opponent' | null
@@ -22,10 +23,10 @@ export default function Game(){
 
     // --- STATE ---
     const [players, setPlayers] = useState<PlayerProps[]>([
-        {id: 1, type: 'human', name: 'You', hand: [], role: undefined, hasPassed: false},
-        {id: 2, type: 'bot', name: 'bot1', hand: [], role: undefined, hasPassed: false},
-        {id: 3, type: 'bot', name: 'bot2', hand: [], role: undefined, hasPassed: false},
-        {id: 4, type: 'bot', name: 'bot3', hand: [], role: undefined, hasPassed: false},
+        {id: 1, type: 'human', name: 'You', hand: [], role: null, hasPassed: false, finishedRank: null},
+        {id: 2, type: 'bot', name: 'bot1', hand: [], role: null, hasPassed: false, finishedRank: null},
+        {id: 3, type: 'bot', name: 'bot2', hand: [], role: null, hasPassed: false, finishedRank: null},
+        {id: 4, type: 'bot', name: 'bot3', hand: [], role: null, hasPassed: false, finishedRank: null},
     ]);
     const [pile, setPile] = useState<DeckType[]>([]);
     const [isGamePhase, setIsGamePhase] = useState<'INITIALIZING' | 'EXCHANGE' | 'PLAYING' | 'GAME_OVER'>('INITIALIZING');
@@ -83,7 +84,60 @@ export default function Game(){
     }
 
     const handlePlay = () => {
+        if(currentTurn !== 0) return
+
+        const currentPlayer = players[currentTurn];
+        const selectedCards = currentPlayer.hand.filter(card => card.isSelected);
+
+        // --- CHECK OF MOVE IS VALID ---
+        const { isValid, message } = validateMove(selectedCards, pile);
+        if(!isValid){
+            Alert.alert('Error', message,);
+            return
+        };
+
+
+        // --- UPDATE PILE ---
+        const newPile = selectedCards;
+        const isBurn = selectedCards[0].power === POWER_2;
+
+        const updatedPlayers = [...players];
+
+
+        // --- UPDATE HAND ---
+        const playedCards = selectedCards.map(card => card.id);
+        updatedPlayers[currentTurn].hand.filter(card => !playedCards.includes(card.id));
+
+
+        // --- CHECK OF PLAYER IS OUT ---
+        if(updatedPlayers[currentTurn].hand.length === 0){
+            const finishedPlayerCount = updatedPlayers.filter(player => player.finishedRank !== null).length;
+            updatedPlayers[currentTurn].finishedRank = finishedPlayerCount + 1;
+
+            Alert.alert("Gefeliciteerd!", `Je bent geëindigd als #${finishedPlayerCount + 1}!`);
+        }
+
+
+        // --- CHANGE TURN & PILE UPDATE ---
+        if(isBurn){
+            setPile([]);
+
+            if(updatedPlayers[currentTurn].hand.length > 0){
+                updatedPlayers.forEach(p => p.hasPassed = false);
+            }else{
+                const nextIndex = getNextActivePlayer(currentTurn, updatedPlayers);
+                setCurrentTurn(nextIndex)
+            }
+        }else{
+            setPile(newPile);
+            
+            const nextIndex = getNextActivePlayer(currentTurn, updatedPlayers);
+            setCurrentTurn(nextIndex);
+        }
+
         
+        // --- UPDATE PLAYERS ---
+        setPlayers(updatedPlayers);
     }
 
     const handlePassTurn = () => {

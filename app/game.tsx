@@ -121,9 +121,9 @@ export default function Game(){
         if (currentTurn !== 0) return;
 
         const currentPlayer = players[currentTurn];
-        const selectedCards = currentPlayer.hand.filter(card => card.isSelected);
+        const playedCards = currentPlayer.hand.filter(card => card.isSelected);
 
-        const { isValid, message } = validateMove(selectedCards, pile);
+        const { isValid, message } = validateMove(playedCards, pile);
         if (!isValid) {
             Alert.alert('Ongeldige Zet', message);
             return;
@@ -131,8 +131,8 @@ export default function Game(){
 
 
         // --- UPDATE PLAYERS ---
-        const playedIds = selectedCards.map(card => card.id);
-        const isBurn = selectedCards[0].power === POWER_2; 
+        const playedIds = playedCards.map(card => card.id);
+        const isBurn = playedCards[0].power === POWER_2; 
         
 
         const newHand = currentPlayer.hand.filter(card => !playedIds.includes(card.id));
@@ -170,25 +170,30 @@ export default function Game(){
         const isGameOver = checkAndHandleGameOver(updatedPlayers);
 
 
-        // --- CHANGE TURN & PILE UPDATE ---
+         // --- CHANGE TURN & PILE UPDATE ---
         if(!isGameOver){
-            if (isBurn) {
+            setPile(playedCards);
             
+            if(isBurn){
                 setTimeout(() => {
                     setPile([]);
-                }, 2000)
-    
-                if (isOut) {
-                    const nextIndex = getNextActivePlayer(currentTurn, updatedPlayers);
-                    setCurrentTurn(nextIndex);
-                }
-    
-            } else {
-                setPile(selectedCards); 
-                
+                    
+                    if(updatedPlayers[currentTurn].hand.length > 0){
+                        setPlayers(prevPlayers => prevPlayers.map(p => ({...p, hasPassed: false})));
+                    } else {
+                        setPlayers(prevPlayers => {
+                            const nextIndex = getNextActivePlayer(currentTurn, prevPlayers);
+                            setCurrentTurn(nextIndex);
+                            return prevPlayers;
+                        });
+                    }
+                }, 1500);
+
+            } else {    
+                // Normal Play
                 const nextIndex = getNextActivePlayer(currentTurn, updatedPlayers);
                 setCurrentTurn(nextIndex);
-            }
+            };
         }
 
         
@@ -272,24 +277,27 @@ export default function Game(){
             // --- CHECK GAME OVER ---
             const isGameOver = checkAndHandleGameOver(updatedPlayers);
 
-
+            
             // --- CHANGE TURN & PILE UPDATE ---
             if(!isGameOver){
-                if(isBurn){
+                setPile(newPile);
 
+                if(isBurn){
                     setTimeout(() => {
                         setPile([]);
-                    }, 2000)
-    
-                    if(updatedPlayers[currentTurn].hand.length > 0){
-                        updatedPlayers.forEach(player => player.hasPassed = false);
-                    }else {
-                        const nextIndex = getNextActivePlayer(currentTurn, updatedPlayers);
-                        setCurrentTurn(nextIndex);
-                    }
-                }else {
-                    setPile(newPile);
-    
+                        
+                        if(updatedPlayers[currentTurn].hand.length > 0){
+                            setPlayers(prevPlayers => prevPlayers.map(p => ({...p, hasPassed: false})));
+                        } else {
+                            setPlayers(prevPlayers => {
+                                const nextIndex = getNextActivePlayer(currentTurn, prevPlayers);
+                                setCurrentTurn(nextIndex);
+                                return prevPlayers;
+                            });
+                        }
+                    }, 1500); 
+
+                } else {    
                     const nextIndex = getNextActivePlayer(currentTurn, updatedPlayers);
                     setCurrentTurn(nextIndex);
                 };
@@ -500,7 +508,7 @@ export default function Game(){
 
             {/* --- BOTTOM AREA --- */}
             <View style={styles.playerArea}>
-                <Text style={styles.playerName}>{players[0].hasPassed ? "PASS" : ''}</Text>
+                <Text style={styles.statusText}>{players[0].hasPassed ? "PASS" : ''}</Text>
                 <Text style={styles.playerName}>{currentTurn === 0 ? "YOUR TURN" : ''}</Text>
                 <FlatList
                     data={players[0].hand}

@@ -13,8 +13,8 @@ import { DeckType, PlayerProps } from "@/constants/types";
 import { getBestMove } from "@/constants/utils/ai";
 import { getNextActivePlayer } from "@/constants/utils/game";
 interface StandingProps {
-    president: 'player' | 'opponent' | null,
-    shit: 'player' | 'opponent' | null
+    presidentId: number | null;
+    shitId: number | null;
 }
 
 const POWER_2 = 13;
@@ -31,8 +31,8 @@ export default function Game(){
     const [pile, setPile] = useState<DeckType[]>([]);
     const [isGamePhase, setIsGamePhase] = useState<'INITIALIZING' | 'EXCHANGE' | 'PLAYING' | 'GAME_OVER'>('INITIALIZING');
     const [standings, setStandings] = useState<StandingProps>({
-        president: null,
-        shit: null
+        presidentId: null,
+        shitId: null
     });
     
     // 0 = Player, 1 = Opponent
@@ -69,7 +69,8 @@ export default function Game(){
         if(phase === 'PLAYING'){
             const shit = distributedPlayers.find(player => player.role === 'shit');
 
-            if(shit){
+
+            if(shit?.id === standings.shitId){
                 const shitIndex = distributedPlayers.findIndex(p => p.id === shit.id);
                 setCurrentTurn(shitIndex);
             }else{
@@ -94,7 +95,7 @@ export default function Game(){
         const isMyTurn = isGamePhase === 'PLAYING' && currentTurn === 0;
         // Voeg hier eventueel je exchange logica weer toe als je dat wilt ondersteunen
         
-        if (!isMyTurn) return;
+        // if (!isMyTurn) return;
 
         setPlayers(currentPlayers => 
             currentPlayers.map(player => {
@@ -166,24 +167,28 @@ export default function Game(){
             return player;
         });
 
+        const isGameOver = checkAndHandleGameOver(updatedPlayers);
+
 
         // --- CHANGE TURN & PILE UPDATE ---
-        if (isBurn) {
+        if(!isGameOver){
+            if (isBurn) {
             
-            setTimeout(() => {
-                setPile([]);
-            }, 2000)
-
-            if (isOut) {
+                setTimeout(() => {
+                    setPile([]);
+                }, 2000)
+    
+                if (isOut) {
+                    const nextIndex = getNextActivePlayer(currentTurn, updatedPlayers);
+                    setCurrentTurn(nextIndex);
+                }
+    
+            } else {
+                setPile(selectedCards); 
+                
                 const nextIndex = getNextActivePlayer(currentTurn, updatedPlayers);
                 setCurrentTurn(nextIndex);
             }
-
-        } else {
-            setPile(selectedCards); 
-            
-            const nextIndex = getNextActivePlayer(currentTurn, updatedPlayers);
-            setCurrentTurn(nextIndex);
         }
 
         
@@ -262,27 +267,33 @@ export default function Game(){
                 const finishedPlayerCount = updatedPlayers.filter(player => player.finishedRank !== null).length;
                 updatedPlayers[currentTurn].finishedRank = finishedPlayerCount + 1;
             }
+            
+            
+            // --- CHECK GAME OVER ---
+            const isGameOver = checkAndHandleGameOver(updatedPlayers);
 
 
             // --- CHANGE TURN & PILE UPDATE ---
-            if(isBurn){
+            if(!isGameOver){
+                if(isBurn){
 
-                setTimeout(() => {
-                    setPile([]);
-                }, 2000)
-
-                if(updatedPlayers[currentTurn].hand.length > 0){
-                    updatedPlayers.forEach(player => player.hasPassed = false);
+                    setTimeout(() => {
+                        setPile([]);
+                    }, 2000)
+    
+                    if(updatedPlayers[currentTurn].hand.length > 0){
+                        updatedPlayers.forEach(player => player.hasPassed = false);
+                    }else {
+                        const nextIndex = getNextActivePlayer(currentTurn, updatedPlayers);
+                        setCurrentTurn(nextIndex);
+                    }
                 }else {
+                    setPile(newPile);
+    
                     const nextIndex = getNextActivePlayer(currentTurn, updatedPlayers);
                     setCurrentTurn(nextIndex);
-                }
-            }else {
-                setPile(newPile);
-
-                const nextIndex = getNextActivePlayer(currentTurn, updatedPlayers);
-                setCurrentTurn(nextIndex);
-            };
+                };
+            }
 
 
             // --- UPDATE PLAYERS ---
@@ -297,10 +308,10 @@ export default function Game(){
         let presidentIndex = players.findIndex(p => p.role === 'president');
         let shitIndex = players.findIndex(p => p.role === 'shit');
 
-        if (presidentIndex === -1 && standings.president === 'player') {
+        if (presidentIndex === -1 && standings.presidentId === players[0].id) {
             presidentIndex = 0; 
             shitIndex = 1;      
-        } else if (shitIndex === -1 && standings.shit === 'player') {
+        } else if (shitIndex === -1 && standings.shitId === players[0].id) {
             shitIndex = 0;     
             presidentIndex = 1;
         }
@@ -358,6 +369,54 @@ export default function Game(){
         setCurrentTurn(shitIndex);
 
         Alert.alert("Succes", `Ruil compleet! ${updatedPlayers[presidentIndex].name} mag uitkomen.`);
+    }
+
+
+    // --- CHECK GAME OVER ---
+    const checkAndHandleGameOver = (currentPlayers:PlayerProps[]) => {
+        const finishedCount = currentPlayers.filter(player => player.finishedRank !== null).length;
+
+        if(finishedCount >= 3){
+            const finalPlayers = currentPlayers.map(player => {
+                if(player.finishedRank === null) return {...player, finishedRank: 4};
+                return player;
+            })
+
+            // --- ASIGN ROLE ---
+            const playersWithRoles = finalPlayers.map(player => {
+                let newRole = player.role;
+
+                if(player.finishedRank === 1) newRole = 'president';
+                if(player.finishedRank === 2) newRole = 'vice-president';
+                if(player.finishedRank === 3) newRole = 'vice-shit';
+                if(player.finishedRank === 4) newRole = 'shit';
+
+                return { ...player, role: newRole};
+            })
+
+
+            // --- UPDATE STADNINGS ---
+            const president = playersWithRoles.find(player => player.role === 'president');
+            const shit = playersWithRoles.find(player => player.role === 'shit');
+
+            setStandings({
+                presidentId: president ? president.id : null,
+                shitId: shit ? shit.id : null
+            });
+
+            setIsGamePhase('GAME_OVER');
+            setPlayers(playersWithRoles);
+
+            Alert.alert("Einde Ronde!", "De rollen zijn verdeeld. Tijd om te ruilen.", [
+                { 
+                    text: "Start Exchange", 
+                    onPress: () => startGame('EXCHANGE')
+                }
+            ]);
+            return true;
+        }
+
+        return false; 
     }
 
 
@@ -425,12 +484,15 @@ export default function Game(){
                         <View style={ styles.exchangeTextContainer }>
                             <Text style={ styles.exchangeHeading }>EXCHANGE CARDS</Text>
                             {
-                                standings.president === "player" ? (
-                                    <Text style={ styles.exchangeText } >{ `YOU ARE THE PRESIDENT, GIVE YOUR 2 WORST CARDS TO ${standings.shit?.toUpperCase()}` }</Text>
+                                standings.presidentId === players[0].id ? (
+                                    <Text style={ styles.exchangeText } >{ `YOU ARE THE PRESIDENT, GIVE YOUR 2 WORST CARDS TO ${standings.presidentId && players[standings.presidentId].name.toUpperCase()}` }</Text>
                                 ):(
-                                    <Text style={ styles.exchangeText } >{ `YOU ARE THE SHIT, GIVE YOUR 2 BEST CARDS TO ${standings.president?.toUpperCase()}` }</Text>
+                                    <Text style={ styles.exchangeText } >{ `YOU ARE THE SHIT, GIVE YOUR 2 BEST CARDS TO ${standings.shitId && players[standings.shitId].name.toUpperCase()}` }</Text>
                                 )
                             }
+                            <TouchableOpacity style={[styles.btn, styles.btnPlay]} onPress={handleExchangeCards}>
+                                <Text style={styles.btnText}>EXCHANGE CARDS</Text>
+                            </TouchableOpacity>
                         </View>
                     )
                 }

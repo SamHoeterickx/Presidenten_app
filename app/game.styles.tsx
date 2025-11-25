@@ -42,6 +42,11 @@ export const styles = StyleSheet.create({
         borderTopRightRadius: 20,
         borderTopLeftRadius: 20,
     },
+    exchangeCardInfoContainer: {
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center'
+    },
 
 
     // --- WRAPPERS ---
@@ -50,7 +55,8 @@ export const styles = StyleSheet.create({
     },
     playerStatusWrapper: {
         marginHorizontal: 50,
-        marginVertical: 20,
+        marginVertical: 10,
+        paddingVertical: 12,
         backgroundColor: '#35654d',
         borderRadius: 50,
         zIndex: 9
@@ -70,7 +76,6 @@ export const styles = StyleSheet.create({
         textAlign: 'center',
         fontWeight: 700,
         fontSize: 20,
-        marginBottom: 10,
         fontStyle: 'italic' 
     },
     cardCount: {
@@ -89,7 +94,8 @@ export const styles = StyleSheet.create({
         color: '#FFF',
         textAlign: 'center',
         fontWeight: 700,
-        fontSize: 16
+        fontSize: 16,
+        paddingTop: 5
     },
     pileText: {
         color: '#FFF',
@@ -102,6 +108,21 @@ export const styles = StyleSheet.create({
         fontWeight: 700,
         fontSize: 16
     },
+    exchangeHeading: {
+        color: '#FFF',
+        textAlign: 'center',
+        fontWeight: 800,
+        fontSize: 26,
+    },
+    exchangeText: {
+        color: '#FFF',
+        opacity: .8,
+        fontSize: 18,
+        fontStyle: 'italic',
+        fontWeight: 500,
+        textAlign: 'center'
+    },
+
     
 
     // --- BUTTONS ---

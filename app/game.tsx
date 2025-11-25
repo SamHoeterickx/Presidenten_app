@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { FlatList, StyleSheet, Text, TouchableOpacity, View, Alert } from "react-native";
+import { Alert, FlatList, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 //Components
@@ -441,20 +441,35 @@ export default function Game(){
                <View style={ styles.opponentWrapper }>
                     <Text style={styles.playerName}>{players[1].name}</Text>
                     <Text style={styles.cardCount}>{players[1].hand.length}</Text>
-                    <Text style={styles.statusText}>{players[1].hasPassed ? "PAS" : ""}</Text>
-                    <Text style={styles.turnText}>{currentTurn === 1 ? "TURN" : ""}</Text>
+                    {
+                        currentTurn === 1 ? (
+                            <Text style={styles.turnText}>TURN</Text>
+                        ) : players[1].hasPassed ?(
+                            <Text style={styles.turnText}>PASS</Text>
+                        ) : <></>
+                    }
                 </View>
                 <View style={ styles.opponentWrapper }>
                     <Text style={styles.playerName}>{players[2].name}</Text>
                     <Text style={styles.cardCount}>{players[2].hand.length}</Text>
-                    <Text style={styles.statusText}>{players[2].hasPassed ? "PAS" : ""}</Text>
-                    <Text style={styles.turnText}>{currentTurn === 2 ? "TURN" : ""}</Text>
+                    {
+                        currentTurn === 2 ? (
+                            <Text style={styles.turnText}>TURN</Text>
+                        ) : players[2].hasPassed ?(
+                            <Text style={styles.turnText}>PASS</Text>
+                        ) : <></>
+                    }
                 </View>
                 <View style={ styles.opponentWrapper }>
                     <Text style={styles.playerName}>{players[3].name}</Text>
                     <Text style={styles.cardCount}>{players[3].hand.length}</Text>
-                    <Text style={styles.statusText}>{players[3].hasPassed ? "PAS" : ""}</Text>
-                    <Text style={styles.turnText}>{currentTurn === 3 ? "TURN" : ""}</Text>
+                    {
+                        currentTurn === 3 ? (
+                            <Text style={styles.turnText}>TURN</Text>
+                        ) : players[3].hasPassed ?(
+                            <Text style={styles.turnText}>PASS</Text>
+                        ) : <></>
+                    }
                 </View>
             </View>
 
@@ -464,7 +479,7 @@ export default function Game(){
                 {/* --- PILE --- */}
                 <View style={ styles.pileContainer } >
                     {
-                        pile.length > 0 ? (
+                        isGamePhase === 'PLAYING' && pile.length > 0 && (
                             <>
                                 {
                                     pile.map((card, index) => (
@@ -474,8 +489,20 @@ export default function Game(){
                                     ))
                                 }
                             </>
-                        ) : (
-                            <Text style={styles.pileText}>Empty Pile</Text>
+                        ) 
+                    }
+                    {
+                        isGamePhase === 'EXCHANGE' && (
+                            <View style={ styles.exchangeCardInfoContainer} >
+                                <Text style={ styles.exchangeHeading }>EXCHANGE CARDS</Text>
+                                {
+                                    standings.presidentId === players[0].id ? (
+                                        <Text style={ styles.exchangeText } >{ `YOU ARE THE PRESIDENT, GIVE YOUR 2 WORST CARDS TO ${standings.presidentId && players[standings.presidentId].name.toUpperCase()}` }</Text>
+                                    ):(
+                                        <Text style={ styles.exchangeText } >{ `YOU ARE THE SHIT, GIVE YOUR 2 BEST CARDS TO ${standings.shitId && players[standings.shitId].name.toUpperCase()}` }</Text>
+                                    )
+                                }
+                            </View>
                         )
                     }
                 </View>
@@ -485,11 +512,31 @@ export default function Game(){
                     {
                         isGamePhase === 'PLAYING' && (
                             <>
-                                <TouchableOpacity style={[styles.button, styles.btnPass]} onPress={handlePassTurn}>
+                                <TouchableOpacity 
+                                    style={[styles.button, styles.btnPass]} 
+                                    onPress={handlePassTurn}
+                                    disabled={ players[0].hasPassed }
+                                >
                                     <Text style={styles.btnText}>PASS</Text>
                                 </TouchableOpacity>
-                                <TouchableOpacity style={[styles.button, styles.btnPlay]} onPress={handlePlay}>
+                                <TouchableOpacity 
+                                    style={[styles.button, styles.btnPlay]} 
+                                    onPress={handlePlay}
+                                    disabled={ players[0].hasPassed }
+                                >
                                     <Text style={styles.btnText}>PLAY</Text>
+                                </TouchableOpacity>
+                            </>
+                        )
+                    }
+
+                    {
+                        isGamePhase === 'EXCHANGE' && (
+                            <>
+                                <TouchableOpacity style={[styles.button]} disabled>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={[styles.button, styles.btnPlay]} onPress={handleExchangeCards}>
+                                    <Text style={styles.btnText}>EXCHANGE CARDS</Text>
                                 </TouchableOpacity>
                             </>
                         )

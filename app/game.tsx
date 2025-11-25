@@ -293,7 +293,71 @@ export default function Game(){
 
     // --- EXCHANGE LOGIC ---
     const handleExchangeCards = () => {
+
+        let presidentIndex = players.findIndex(p => p.role === 'president');
+        let shitIndex = players.findIndex(p => p.role === 'shit');
+
+        if (presidentIndex === -1 && standings.president === 'player') {
+            presidentIndex = 0; 
+            shitIndex = 1;      
+        } else if (shitIndex === -1 && standings.shit === 'player') {
+            shitIndex = 0;     
+            presidentIndex = 1;
+        }
+
+        if (presidentIndex === -1 || shitIndex === -1) {
+            setIsGamePhase('PLAYING');
+            startGame('PLAYING');
+            return;
+        }
+
+        // --- CHECK IF YOU ARE PART OF THE TRADE ---
+        const isPlayerPresident = presidentIndex === 0;
+        const isPlayerShit = shitIndex === 0;
+
+        if (!isPlayerPresident && !isPlayerShit) {
+            setIsGamePhase('PLAYING');
+            setCurrentTurn(shitIndex);
+            Alert.alert("Start", `${players[shitIndex].name} is Shit and may start.`);
+            return;
+        }
+
+        // --- DETERMINE TRADE PARTNER ---
+        const opponentIndex = isPlayerPresident ? shitIndex : presidentIndex;
+
+
+        // --- EXECUTE EXCHANGE ---
+        const result = executeExchange(
+            players[0].hand,
+            players[opponentIndex].hand,
+            isPlayerPresident
+        );
+
+        if (!result.success) {
+            Alert.alert("Woeps", result.message || "Something went wrong");
+            return;
+        }
+
+        const updatedPlayers = [...players];
         
+        // -- UPDATE MY HAND ---
+        updatedPlayers[0] = {
+            ...updatedPlayers[0],
+            hand: result.newPlayerHand!
+        };
+
+        // --- UPDATE OPPONENTS HANDS ---
+        updatedPlayers[opponentIndex] = {
+            ...updatedPlayers[opponentIndex],
+            hand: result.newOpponentHand!
+        };
+
+        // --- UPDATE ---
+        setPlayers(updatedPlayers);
+        setIsGamePhase('PLAYING');
+        setCurrentTurn(shitIndex);
+
+        Alert.alert("Succes", `Ruil compleet! ${updatedPlayers[presidentIndex].name} mag uitkomen.`);
     }
 
 
@@ -308,16 +372,19 @@ export default function Game(){
                     <Text style={styles.playerName}>{players[1].name}</Text>
                     <Text style={styles.cardCount}>{players[1].hand.length}</Text>
                     <Text style={styles.statusText}>{players[1].hasPassed ? "PAS" : ""}</Text>
+                    <Text style={styles.playerName}>{currentTurn === 1 ? "TURN" : ""}</Text>
                 </View>
                 <View>
                     <Text style={styles.playerName}>{players[2].name}</Text>
                     <Text style={styles.cardCount}>{players[2].hand.length}</Text>
                     <Text style={styles.statusText}>{players[2].hasPassed ? "PAS" : ""}</Text>
+                    <Text style={styles.playerName}>{currentTurn === 2 ? "TURN" : ""}</Text>
                 </View>
                 <View>
                     <Text style={styles.playerName}>{players[3].name}</Text>
                     <Text style={styles.cardCount}>{players[3].hand.length}</Text>
                     <Text style={styles.statusText}>{players[3].hasPassed ? "PAS" : ""}</Text>
+                    <Text style={styles.playerName}>{currentTurn === 3 ? "TURN" : ""}</Text>
                 </View>
             </View>
 
@@ -371,7 +438,8 @@ export default function Game(){
 
             {/* --- BOTTOM AREA --- */}
             <View style={styles.playerArea}>
-                <Text style={styles.playerName}>Jij ({players[0].hasPassed ? "GEPAST" : "Aan de beurt"})</Text>
+                <Text style={styles.playerName}>{players[0].hasPassed ? "PASS" : ''}</Text>
+                <Text style={styles.playerName}>{currentTurn === 0 ? "YOUR TURN" : ''}</Text>
                 <FlatList
                     data={players[0].hand}
                     horizontal
@@ -473,7 +541,7 @@ const styles = StyleSheet.create({
         height: '20%', 
     },
     playerName: {
-        color: 'white',
+        color: 'black',
         fontWeight: 'bold',
         fontSize: 12,
         textAlign: 'center'

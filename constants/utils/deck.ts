@@ -48,6 +48,7 @@ export const dealNewGame = (currentPlayers:PlayerProps[]):PlayerProps[] => {
         ...player,
         hand: [] as DeckType[],
         hasPassed: false,
+        finishedRank: null
     }));
     
     shuffledDeck.forEach((card, index) => {

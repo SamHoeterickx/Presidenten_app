@@ -17,7 +17,7 @@ export default function HomeScreen() {
           onPress={ handleStartGame }
           style={ styles.button }
         >
-          <Text>Play against AI-Bot</Text>
+          <Text>Play game</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

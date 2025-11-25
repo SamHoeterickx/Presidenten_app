@@ -147,7 +147,7 @@ export default function Game(){
     // --- HANDLE USER PASS TURN
     const handlePassTurn = () => {
         if(currentTurn === undefined) return
-        
+
         
         // --- UPDATE HASPASSED FOR CURRENTPLAYER ---
         const updatedPlayers = [...players];
@@ -186,8 +186,57 @@ export default function Game(){
 
 
     // --- AI LOGIC ---
-    const handleOpponentTurn = (currentPile: DeckType[]) => {
+    const handleBotTurn = () => {
+        if(currentTurn === undefined) return
+
+        const bot = players[currentTurn];
+
         
+        // --- AI MAKES A MOVE ---
+        const cardsToPlay = getBestMove(bot.hand, pile);
+
+        if(cardsToPlay === null){
+            handlePassTurn();
+        }else{
+            
+            // --- AI PLAYS CARDS ---
+            const isBurn = cardsToPlay[0].power === POWER_2;
+            const newPile = cardsToPlay;
+
+            const updatedPlayers = [...players];
+            
+            const playedCards = cardsToPlay.map(card => card.id);
+            updatedPlayers[currentTurn].hand = bot.hand.filter(card => !playedCards.includes(card.id));
+
+
+            // --- CHECK IF BOT IS OUT ---
+            if(updatedPlayers[currentTurn].hand.length === 0){
+                const finishedPlayerCount = updatedPlayers.filter(player => player.finishedRank !== null).length;
+                updatedPlayers[currentTurn].finishedRank = finishedPlayerCount + 1;
+            }
+
+
+            // --- CHANGE TURN & PILE UPDATE ---
+            if(isBurn){
+                setPile([]);
+
+                if(updatedPlayers[currentTurn].hand.length > 0){
+                    updatedPlayers.forEach(player => player.hasPassed = false);
+                }else {
+                    const nextIndex = getNextActivePlayer(currentTurn, updatedPlayers);
+                    setCurrentTurn(nextIndex);
+                }
+            }else {
+                setPile(newPile);
+
+                const nextIndex = getNextActivePlayer(currentTurn, updatedPlayers);
+                setCurrentTurn(nextIndex);
+            };
+
+
+            // --- UPDATE PLAYERS ---
+            setPlayers(updatedPlayers);
+        }
     };
 
 

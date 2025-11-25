@@ -17,6 +17,9 @@ interface StandingProps {
     shitId: number | null;
 }
 
+//Styles
+import { styles } from './game.styles';
+
 const POWER_2 = 13;
 
 export default function Game(){
@@ -24,9 +27,9 @@ export default function Game(){
     // --- STATE ---
     const [players, setPlayers] = useState<PlayerProps[]>([
         {id: 1, type: 'human', name: 'You', hand: [], role: null, hasPassed: false, finishedRank: null},
-        {id: 2, type: 'bot', name: 'bot1', hand: [], role: null, hasPassed: false, finishedRank: null},
-        {id: 3, type: 'bot', name: 'bot2', hand: [], role: null, hasPassed: false, finishedRank: null},
-        {id: 4, type: 'bot', name: 'bot3', hand: [], role: null, hasPassed: false, finishedRank: null},
+        {id: 2, type: 'bot', name: 'Player 1', hand: [], role: null, hasPassed: false, finishedRank: null},
+        {id: 3, type: 'bot', name: 'Player 2', hand: [], role: null, hasPassed: false, finishedRank: null},
+        {id: 4, type: 'bot', name: 'Player 3', hand: [], role: null, hasPassed: false, finishedRank: null},
     ]);
     const [pile, setPile] = useState<DeckType[]>([]);
     const [isGamePhase, setIsGamePhase] = useState<'INITIALIZING' | 'EXCHANGE' | 'PLAYING' | 'GAME_OVER'>('INITIALIZING');
@@ -432,200 +435,102 @@ export default function Game(){
 
     return (
         <SafeAreaView style={styles.container}>
-            
-            {/* --- TOP AREA --- */}
-            <View style={styles.topArea}>
-                <View>
+
+            {/* --- TOP VIEW --- */}
+            <View style={ styles.opponentContainer }>
+               <View style={ styles.opponentWrapper }>
                     <Text style={styles.playerName}>{players[1].name}</Text>
                     <Text style={styles.cardCount}>{players[1].hand.length}</Text>
                     <Text style={styles.statusText}>{players[1].hasPassed ? "PAS" : ""}</Text>
-                    <Text style={styles.playerName}>{currentTurn === 1 ? "TURN" : ""}</Text>
+                    <Text style={styles.turnText}>{currentTurn === 1 ? "TURN" : ""}</Text>
                 </View>
-                <View>
+                <View style={ styles.opponentWrapper }>
                     <Text style={styles.playerName}>{players[2].name}</Text>
                     <Text style={styles.cardCount}>{players[2].hand.length}</Text>
                     <Text style={styles.statusText}>{players[2].hasPassed ? "PAS" : ""}</Text>
-                    <Text style={styles.playerName}>{currentTurn === 2 ? "TURN" : ""}</Text>
+                    <Text style={styles.turnText}>{currentTurn === 2 ? "TURN" : ""}</Text>
                 </View>
-                <View>
+                <View style={ styles.opponentWrapper }>
                     <Text style={styles.playerName}>{players[3].name}</Text>
                     <Text style={styles.cardCount}>{players[3].hand.length}</Text>
                     <Text style={styles.statusText}>{players[3].hasPassed ? "PAS" : ""}</Text>
-                    <Text style={styles.playerName}>{currentTurn === 3 ? "TURN" : ""}</Text>
+                    <Text style={styles.turnText}>{currentTurn === 3 ? "TURN" : ""}</Text>
                 </View>
             </View>
 
+            {/* --- PILE + ACTION BUTTONS --- */}
+            <View style={styles.midContainer }>
 
-            {/* THE PILE */}
-            <View style={styles.pileArea}>
-                {pile.length > 0 ? (
-                    <View>
-                        {pile.map((card, index) => (
-                            <View key={card.id} style={[styles.pileCard, { left: index * 20 }]}>
-                                <Card card={card} onPress={() => {}} /> 
-                            </View>
-                        ))}
-                    </View>
-                ) : (
-                    <Text style={styles.pileText}>Empty Pile</Text>
-                )}
+                {/* --- PILE --- */}
+                <View style={ styles.pileContainer } >
+                    {
+                        pile.length > 0 ? (
+                            <>
+                                {
+                                    pile.map((card, index) => (
+                                        <View key={card.id} style={styles.pileCard}>
+                                            <Card card={card} onPress={() => {}} /> 
+                                        </View>
+                                    ))
+                                }
+                            </>
+                        ) : (
+                            <Text style={styles.pileText}>Empty Pile</Text>
+                        )
+                    }
+                </View>
+
+                {/* --- ACTION BUTTONS --- */}
+                <View style={ styles.actionButtonContainer } >
+                    {
+                        isGamePhase === 'PLAYING' && (
+                            <>
+                                <TouchableOpacity style={[styles.button, styles.btnPass]} onPress={handlePassTurn}>
+                                    <Text style={styles.btnText}>PASS</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={[styles.button, styles.btnPlay]} onPress={handlePlay}>
+                                    <Text style={styles.btnText}>PLAY</Text>
+                                </TouchableOpacity>
+                            </>
+                        )
+                    }
+                </View>
+
+
             </View>
 
-            {/* --- ACTION BUTTONS --- */}
-            <View style={styles.actionArea}>
-
+            {/* --- PLAYERS HAND --- */}
+            <View style={ styles.playerHandContainer }>
+                
                 {
-                    isGamePhase === 'PLAYING' && (
-                        <>
-                            <TouchableOpacity style={[styles.btn, styles.btnPass]} onPress={handlePassTurn}>
-                                <Text style={styles.btnText}>PASS</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={[styles.btn, styles.btnPlay]} onPress={handlePlay}>
-                                <Text style={styles.btnText}>PLAY</Text>
-                            </TouchableOpacity>
-                        </>
-                    )
-                }
-
-                {
-                    isGamePhase === 'EXCHANGE' && (
-                        <View style={ styles.exchangeTextContainer }>
-                            <Text style={ styles.exchangeHeading }>EXCHANGE CARDS</Text>
-                            {
-                                standings.presidentId === players[0].id ? (
-                                    <Text style={ styles.exchangeText } >{ `YOU ARE THE PRESIDENT, GIVE YOUR 2 WORST CARDS TO ${standings.presidentId && players[standings.presidentId].name.toUpperCase()}` }</Text>
-                                ):(
-                                    <Text style={ styles.exchangeText } >{ `YOU ARE THE SHIT, GIVE YOUR 2 BEST CARDS TO ${standings.shitId && players[standings.shitId].name.toUpperCase()}` }</Text>
-                                )
-                            }
-                            <TouchableOpacity style={[styles.btn, styles.btnPlay]} onPress={handleExchangeCards}>
-                                <Text style={styles.btnText}>EXCHANGE CARDS</Text>
-                            </TouchableOpacity>
+                    currentTurn === 0 ? (
+                        <View style={ styles.playerStatusWrapper} >
+                            <Text style={styles.playerName}>YOUR TURN</Text>
                         </View>
+                    ) : players[0].hasPassed ? (
+                        <View style={ styles.playerStatusWrapper} >
+                            <Text style={styles.playerName}>PASS</Text>
+                        </View>
+                    ) : ( <View style={ styles.playerStatusWrapper} >
+                            <Text style={styles.playerName}></Text>
+                        </View> 
                     )
                 }
+                <View style={ styles.handWrapper }>
+                    <FlatList
+                        style={ styles.playerHand }
+                        data={players[0].hand}
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={{ padding: 10 }}
+                        keyExtractor={(item) => item.id}
+                        renderItem={({ item }) => (
+                            <Card card={item} onPress={handleCardTap} />
+                        )}
+                    />
+                </View>
             </View>
-
-            {/* --- BOTTOM AREA --- */}
-            <View style={styles.playerArea}>
-                <Text style={styles.statusText}>{players[0].hasPassed ? "PASS" : ''}</Text>
-                <Text style={styles.playerName}>{currentTurn === 0 ? "YOUR TURN" : ''}</Text>
-                <FlatList
-                    data={players[0].hand}
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={{ padding: 10 }}
-                    keyExtractor={(item) => item.id}
-                    renderItem={({ item }) => (
-                        <Card card={item} onPress={handleCardTap} />
-                    )}
-                />
-            </View>
+            
         </SafeAreaView>
     );
 }
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#35654d',
-        justifyContent: 'space-between'
-    },
-    gameTable: {
-        flex: 1,
-        justifyContent: 'space-between',
-        padding: 20,
-    },
-    opponentArea: {
-        alignItems: 'center',
-        padding: 20,
-        backgroundColor: 'rgba(255,255,255,0.1)',
-    },
-    pileArea: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        gap: 5,
-        height: '45%',
-    },
-    pileText: {
-        color: 'white',
-        fontSize: 18,
-    },
-    playerArea: {
-        padding: 20,
-        backgroundColor: 'white',
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
-        minHeight: 150,
-        height: '25%'
-    },
-    actionArea: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        gap: 20,
-        marginVertical: 10,
-    },
-    btn: {
-        paddingVertical: 12,
-        paddingHorizontal: 24,
-        borderRadius: 25,
-        elevation: 5,
-        minWidth: 100,
-        alignItems: 'center',
-    },
-    btnPlay: {
-        backgroundColor: '#FFD700',
-    },
-    btnPass: {
-        backgroundColor: '#A9A9A9',
-    },
-    btnText: {
-        fontWeight: 'bold',
-        color: '#333',
-    },
-    pileCard: {
-        transform: [{ scale: 1 }], 
-    },
-    exchangeTextContainer:{
-        alignContent: 'center',
-        justifyContent: 'center',
-    },
-    exchangeHeading: {
-        fontSize: 24,
-        textAlign: 'center',
-        fontWeight: 700,
-        color: '#FFF'
-    },
-    exchangeText: {
-        fontSize: 18,
-        textAlign: 'center',
-        color: '#FFF'
-    },
-    topArea: {
-        marginHorizontal: 50,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        height: '20%', 
-    },
-    playerName: {
-        color: 'black',
-        fontWeight: 'bold',
-        fontSize: 12,
-        textAlign: 'center'
-    },
-    cardCount: {
-        color: '#FFD700',
-        fontSize: 16,
-        fontWeight: 'bold',
-        textAlign: 'center'
-    },
-    statusText: {
-        color: '#FF4444',
-        fontWeight: 'bold',
-        marginTop: 4,
-        textAlign: 'center'
-    }
-});

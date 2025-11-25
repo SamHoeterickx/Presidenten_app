@@ -238,33 +238,57 @@ export default function Game(){
 
     return (
         <SafeAreaView style={styles.container}>
-            <View style={styles.gameTable}>
-                
-                {/* OPPONENT AREA */}
-                <View style={styles.opponentArea}>
-                    <Text>Opponent Cards: {playerTwoCards.length}</Text>
+            {/* --- TOP AREA --- */}
+            <View style={styles.topArea}>
+                <View>
+                    <Text style={styles.playerName}>{players[1].name}</Text>
+                    <Text style={styles.cardCount}>{players[1].hand.length}</Text>
+                    <Text style={styles.statusText}>{players[1].hasPassed ? "PAS" : ""}</Text>
+                    <Text style={styles.playerName}>{currentTurn === 1 ? "TURN" : ""}</Text>
                 </View>
+                <View>
+                    <Text style={styles.playerName}>{players[2].name}</Text>
+                    <Text style={styles.cardCount}>{players[2].hand.length}</Text>
+                    <Text style={styles.statusText}>{players[2].hasPassed ? "PAS" : ""}</Text>
+                    <Text style={styles.playerName}>{currentTurn === 2 ? "TURN" : ""}</Text>
+                </View>
+                <View>
+                    <Text style={styles.playerName}>{players[3].name}</Text>
+                    <Text style={styles.cardCount}>{players[3].hand.length}</Text>
+                    <Text style={styles.statusText}>{players[3].hasPassed ? "PAS" : ""}</Text>
+                    <Text style={styles.playerName}>{currentTurn === 3 ? "TURN" : ""}</Text>
+                </View>
+            </View>
 
-                {/* PILE AREA (Middle) */}
+
+            {/* THE PILE */}
+            <View style={styles.pileArea}>
+                {pile.length > 0 ? (
+                    <View>
+                        {pile.map((card, index) => (
+                            <View key={card.id} style={[styles.pileCard, { left: index * 20 }]}>
+                                <Card card={card} onPress={() => {}} /> 
+                            </View>
+                        ))}
+                    </View>
+                ) : (
+                    <Text style={styles.pileText}>Empty Pile</Text>
+                )}
+            </View>
+
+            {/* --- ACTION BUTTONS --- */}
+            <View style={styles.actionArea}>
+
                 {
                     isGamePhase === 'PLAYING' && (
-                        <View style={styles.pileArea}>
-                            {
-                                pile.length > 0 ? (
-                                    <View style={styles.pileContainer}>
-                                        {
-                                            pile.map((card, index) => (
-                                                <View key={card.id} style={[styles.pileCard, { left: index * 20 }]}>
-                                                    <Card card={card} onPress={() => {}} /> 
-                                                </View>
-                                            ))
-                                        }
-                                    </View>
-                                ) : (
-                                    <Text style={styles.pileText}>Empty Pile</Text>
-                                )
-                            }
-                        </View>
+                        <>
+                            <TouchableOpacity style={[styles.btn, styles.btnPass]} onPress={handlePassTurn}>
+                                <Text style={styles.btnText}>PASS</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={[styles.btn, styles.btnPlay]} onPress={handlePlay}>
+                                <Text style={styles.btnText}>PLAY</Text>
+                            </TouchableOpacity>
+                        </>
                     )
                 }
 
@@ -273,66 +297,34 @@ export default function Game(){
                         <View style={ styles.exchangeTextContainer }>
                             <Text style={ styles.exchangeHeading }>EXCHANGE CARDS</Text>
                             {
-                                standings.president === "player" ? (
-                                    <Text style={ styles.exchangeText } >{ `YOU ARE THE PRESIDENT, GIVE YOUR 2 WORST CARDS TO ${standings.shit?.toUpperCase()}` }</Text>
+                                standings.presidentId === players[0].id ? (
+                                    <Text style={ styles.exchangeText } >{ `YOU ARE THE PRESIDENT, GIVE YOUR 2 WORST CARDS TO ${standings.presidentId && players[standings.presidentId].name.toUpperCase()}` }</Text>
                                 ):(
-                                    <Text style={ styles.exchangeText } >{ `YOU ARE THE SHIT, GIVE YOUR 2 BEST CARDS TO ${standings.president?.toUpperCase()}` }</Text>
+                                    <Text style={ styles.exchangeText } >{ `YOU ARE THE SHIT, GIVE YOUR 2 BEST CARDS TO ${standings.shitId && players[standings.shitId].name.toUpperCase()}` }</Text>
                                 )
                             }
+                            <TouchableOpacity style={[styles.btn, styles.btnPlay]} onPress={handleExchangeCards}>
+                                <Text style={styles.btnText}>EXCHANGE CARDS</Text>
+                            </TouchableOpacity>
                         </View>
                     )
                 }
+            </View>
 
-                <View style={styles.actionArea}>
-                    {
-                        isGamePhase === 'PLAYING' && (
-                            <>
-                                <TouchableOpacity 
-                                    style={[styles.btn, styles.btnPass]} 
-                                    onPress={handlePassTurn}
-                                >
-                                    <Text style={styles.btnText}>PASS</Text>
-                                </TouchableOpacity>
-
-                                <TouchableOpacity 
-                                    style={[styles.btn, styles.btnPlay]} 
-                                    onPress={handlePlay}
-                                >
-                                    <Text style={styles.btnText}>PLAY SELECTED</Text>
-                                </TouchableOpacity>
-                            </>
-                        )
-                    }
-
-                    {
-                        isGamePhase === 'EXCHANGE' && (
-                            <TouchableOpacity 
-                                style={[styles.btn, styles.btnPlay]} 
-                                onPress={handleExchangeCards}
-                            >
-                                <Text style={styles.btnText}>EXCHANGE SELECTED CARDS</Text>
-                            </TouchableOpacity>
-                        )
-                    }
-                </View>
-
-                {/* PLAYER AREA */}
-                <View style={styles.playerArea}>
-                    <FlatList
-                        data={playerOneCards}
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={{ paddingLeft: 20, paddingRight: 20, paddingTop: 20 }}
-                        keyExtractor={(item) => item.id}
-                        renderItem={({ item }) => (
-                            <Card
-                                card={item} 
-                                onPress={handleCardTap} 
-                            />
-                        )}
-                    />
-                </View>
-                
+            {/* --- BOTTOM AREA --- */}
+            <View style={styles.playerArea}>
+                <Text style={styles.statusText}>{players[0].hasPassed ? "PASS" : ''}</Text>
+                <Text style={styles.playerName}>{currentTurn === 0 ? "YOUR TURN" : ''}</Text>
+                <FlatList
+                    data={players[0].hand}
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{ padding: 10 }}
+                    keyExtractor={(item) => item.id}
+                    renderItem={({ item }) => (
+                        <Card card={item} onPress={handleCardTap} />
+                    )}
+                />
             </View>
         </SafeAreaView>
     );
@@ -342,6 +334,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#35654d',
+        justifyContent: 'space-between'
     },
     gameTable: {
         flex: 1,
@@ -354,13 +347,12 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(255,255,255,0.1)',
     },
     pileArea: {
-        height: 200,
+        flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
-        borderWidth: 2,
-        borderColor: 'rgba(255,255,255,0.3)',
-        borderStyle: 'dashed',
-        borderRadius: 10,
+        flexWrap: 'wrap',
+        gap: 5,
+        height: '45%',
     },
     pileText: {
         color: 'white',
@@ -372,6 +364,7 @@ const styles = StyleSheet.create({
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
         minHeight: 150,
+        height: '25%'
     },
     actionArea: {
         flexDirection: 'row',
@@ -397,16 +390,8 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#333',
     },
-    // Styles to make the pile look good
-    pileContainer: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
     pileCard: {
-        // We use absolute positioning relative to the pile container
-        // so they stack on top of each other centered
-        transform: [{ scale: 0.8 }], // Make pile cards slightly smaller
+        transform: [{ scale: 1 }], 
     },
     exchangeTextContainer:{
         alignContent: 'center',
@@ -422,5 +407,30 @@ const styles = StyleSheet.create({
         fontSize: 18,
         textAlign: 'center',
         color: '#FFF'
+    },
+    topArea: {
+        marginHorizontal: 50,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        height: '20%', 
+    },
+    playerName: {
+        color: 'black',
+        fontWeight: 'bold',
+        fontSize: 12,
+        textAlign: 'center'
+    },
+    cardCount: {
+        color: '#FFD700',
+        fontSize: 16,
+        fontWeight: 'bold',
+        textAlign: 'center'
+    },
+    statusText: {
+        color: '#FF4444',
+        fontWeight: 'bold',
+        marginTop: 4,
+        textAlign: 'center'
     }
 });

@@ -1,13 +1,8 @@
 import { StyleSheet } from "react-native";
 
-export const styles = StyleSheet.create({
+export const gameStyles = StyleSheet.create({
 
     // --- Containers ---
-    container: {
-        flex: 1,
-        backgroundColor: '#35654d',
-        justifyContent: 'space-between'
-    },
     opponentContainer: {
         flex: 1,
         flexDirection: 'row',

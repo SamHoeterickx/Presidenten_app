@@ -43,14 +43,20 @@ export default function Game(){
         startGame('PLAYING');
     }, []);
 
-    // useEffect(() => {
-    //     if (currentTurn === 1 && isGamePhase === 'PLAYING') {
-    //         const timer = setTimeout(() => {
-    //             handleOpponentTurn(pile);
-    //         }, 1000);
-    //         return () => clearTimeout(timer);
-    //     }
-    // }, [currentTurn, isGamePhase, pile, playerTwoCards]);
+    useEffect(() => {
+    
+        if(isGamePhase !== 'PLAYING' || currentTurn === undefined) return;
+
+        const currentPlayer = players[currentTurn];
+
+        if(currentPlayer.type === 'bot'){
+            const timer = setTimeout(() => {
+                handleBotTurn();
+            }, 1000);
+
+            return () => clearTimeout(timer);
+        }
+    }, [currentTurn, isGamePhase, players, pile]);
 
     const startGame = (phase: 'INITIALIZING' | 'EXCHANGE' | 'PLAYING' | 'GAME_OVER') => {
 

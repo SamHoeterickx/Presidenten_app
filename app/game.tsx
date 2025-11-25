@@ -78,11 +78,14 @@ export default function Game(){
         setPlayers(distributedPlayers);
     };
 
+
     // --- PLAYER ACTIONS ---
     const handleCardTap = (tappedCard: DeckType) => {
         
     }
 
+
+    // --- HANDLE PLAY ---
     const handlePlay = () => {
         if(currentTurn !== 0) return
 
@@ -140,14 +143,53 @@ export default function Game(){
         setPlayers(updatedPlayers);
     }
 
-    const handlePassTurn = () => {
 
+    // --- HANDLE USER PASS TURN
+    const handlePassTurn = () => {
+        if(currentTurn === undefined) return
+        
+        
+        // --- UPDATE HASPASSED FOR CURRENTPLAYER ---
+        const updatedPlayers = [...players];
+        updatedPlayers[currentTurn].hasPassed = true;
+
+
+        // --- CHECK ACTIVE PLAYERS AMOUNT FOR THIS ROUND --- 
+        const activePlayersInRound = updatedPlayers.filter(player => !player.hasPassed && player.hand.length > 0);
+
+        if(activePlayersInRound.length <= 1){
+            const winner = activePlayersInRound.length === 1 ? activePlayersInRound[0] : updatedPlayers[currentTurn];
+
+            Alert.alert("ROUND WON", `BY${winner.name}, AND MAY START AGAIN`);
+            startNewRound(winner.id, updatedPlayers);
+        }else {
+            setPlayers(updatedPlayers);
+
+            const nextPlayerIndex = getNextActivePlayer(currentTurn, updatedPlayers)
+            setCurrentTurn(nextPlayerIndex);
+        }
     }
+
+
+    // --- RESET ROUND HELPER ---
+    const startNewRound = (winnerId:number, currentPlayersState:typeof players) => {
+        setPile([]);
+
+        const resetPlayers = currentPlayersState.map(player => ({
+            ...player,
+            hasPassed: false
+        }));
+
+        setPlayers(resetPlayers);
+        setCurrentTurn(winnerId);
+    }
+
 
     // --- AI LOGIC ---
     const handleOpponentTurn = (currentPile: DeckType[]) => {
         
     };
+
 
     // --- EXCHANGE LOGIC ---
     const handleExchangeCards = () => {

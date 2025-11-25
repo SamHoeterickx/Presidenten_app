@@ -13,7 +13,7 @@ export const validateMove = (selectedCards:DeckType[], pile:DeckType[]): Validat
     if(selectedCards.length === 0){
         return { 
             isValid: false, 
-            message: "Please select a card first" 
+            message: "Please select a card" 
         };
     };
 

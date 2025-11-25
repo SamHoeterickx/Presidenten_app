@@ -21,6 +21,7 @@ interface StandingProps {
 import { styles } from './game.styles';
 
 const POWER_2 = 13;
+const roles = ['President', 'Vice President', 'Vice Shit', 'Shit'];
 
 export default function Game(){
 
@@ -128,7 +129,7 @@ export default function Game(){
 
         const { isValid, message } = validateMove(playedCards, pile);
         if (!isValid) {
-            Alert.alert('Ongeldige Zet', message);
+            Alert.alert('Invalid move', message);
             return;
         }
 
@@ -145,8 +146,7 @@ export default function Game(){
         let newFinishedRank: number | null = currentPlayer.finishedRank;
         if (isOut) {
             const alreadyFinishedCount = players.filter(p => p.finishedRank !== null).length;
-            newFinishedRank = alreadyFinishedCount + 1;
-            Alert.alert("Gefeliciteerd!", `Je bent klaar! Rank: ${newFinishedRank}`);
+            Alert.alert("Congratulations!", `Your the ${roles[alreadyFinishedCount]}`);
         }
 
         const shouldResetPasses = isBurn;
@@ -379,7 +379,7 @@ export default function Game(){
         setIsGamePhase('PLAYING');
         setCurrentTurn(shitIndex);
 
-        Alert.alert("Succes", `Ruil compleet! ${updatedPlayers[presidentIndex].name} mag uitkomen.`);
+        Alert.alert("Succes", `Exchange completed! ${updatedPlayers[shitIndex].name} start.`);
     }
 
 
@@ -418,7 +418,7 @@ export default function Game(){
             setIsGamePhase('GAME_OVER');
             setPlayers(playersWithRoles);
 
-            Alert.alert("Einde Ronde!", "De rollen zijn verdeeld. Tijd om te ruilen.", [
+            Alert.alert('Round over', 'Get ready to exchange cards', [
                 { 
                     text: "Start Exchange", 
                     onPress: () => startGame('EXCHANGE')

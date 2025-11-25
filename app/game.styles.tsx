@@ -15,12 +15,10 @@ export const styles = StyleSheet.create({
         alignItems: 'flex-start',
         marginHorizontal: 50,
         marginVertical: 20,
-        height: '15%',
-        borderBottomColor: '#FFF',
-        borderBottomWidth: 1
+        height: '10%',
     },
     midContainer: {
-        height: '55%'
+        height: '60%'
     },
     pileContainer: {
         height: '88%',

@@ -1,4 +1,4 @@
-import { DeckType } from "../types";
+import { DeckType, PlayerProps } from "../types";
 
 const SUITS = ['spades', 'hearts', 'diamonds', 'clubs'];
 const RANKS = ['3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A', '2'];
@@ -40,21 +40,26 @@ export const shuffleDeck = (deck:DeckType[]) => {
     return newDeck;
 }
 
-export const dealNewGame = () => {
+export const dealNewGame = (currentPlayers:PlayerProps[]):PlayerProps[] => {
     const deck = createDeck();
     const shuffledDeck = shuffleDeck(deck);
 
-    const halfDeck = Math.ceil(shuffledDeck.length / 2);
-    const playerOneCards = shuffledDeck.slice(0, halfDeck);
-    const playerTwoCards = shuffledDeck.slice(halfDeck);
+    const newPlayers = currentPlayers.map(player => ({
+        ...player,
+        hand: [] as DeckType[],
+        hasPassed: false,
+    }));
+    
+    shuffledDeck.forEach((card, index) => {
+        const playerIndex = index % newPlayers.length;              // index % newPlayers.length zorgt ervoor dat het constant 0,1,2,3,0,1,... is 
+        newPlayers[playerIndex].hand.push(card);
+    });
 
-    playerOneCards.sort((a, b) => a.power - b.power);
-    playerTwoCards.sort((a, b) => a.power - b.power);
+    newPlayers.forEach(player => {
+        player.hand.sort((a, b) => a.power - b.power)
+    });
 
-    return {
-        playerOneCards,
-        playerTwoCards
-    }
+    return newPlayers
 }
 
 export const executeExchange = (playerHand:DeckType[], opponentHand:DeckType[], isPlayerPresident:boolean) => {

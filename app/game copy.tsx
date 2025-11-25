@@ -42,62 +42,195 @@ export default function Game(){
         startGame('PLAYING');
     }, []);
 
-    // useEffect(() => {
-    //     if (currentTurn === 1 && isGamePhase === 'PLAYING') {
-    //         const timer = setTimeout(() => {
-    //             handleOpponentTurn(pile);
-    //         }, 1000);
-    //         return () => clearTimeout(timer);
-    //     }
-    // }, [currentTurn, isGamePhase, pile, playerTwoCards]);
+    useEffect(() => {
+        if (currentTurn === 1 && isGamePhase === 'PLAYING') {
+            const timer = setTimeout(() => {
+                handleOpponentTurn(pile);
+            }, 1000);
+            return () => clearTimeout(timer);
+        }
+    }, [currentTurn, isGamePhase, pile, playerTwoCards]);
 
     const startGame = (phase: 'INITIALIZING' | 'EXCHANGE' | 'PLAYING' | 'GAME_OVER') => {
-
-        const distributedPlayers = dealNewGame(players);
-
-        setPile([]);
+        const { playerOneCards, playerTwoCards } = dealNewGame();
+        setPlayerOneCards(playerOneCards);
+        setPlayerTwoCards(playerTwoCards);
         setIsGamePhase(phase);
+        setPile([]);
 
-        if(phase === 'PLAYING'){
-            const shit = distributedPlayers.find(player => player.role === 'shit');
+        if (standings.president === null && standings.shit === null) {
+            const opponentStarts = playerTwoCards.find(card => card.rank === '3' && card.suit === 'spades');
 
-            if(shit){
-                setCurrentTurn(shit.id);
-            }else{
-                const startingPlayer = distributedPlayers.find(player => player.hand.some(card => card.suit === 'spades' && card.rank === '3'));
-
-                if(startingPlayer){
-                    setCurrentTurn(startingPlayer.id);
-                }else{
-                    setCurrentTurn(1);
-                }
+            if (opponentStarts) {
+                setCurrentTurn(1);
+                handleOpponentTurn([]);
+            } else {
+                setCurrentTurn(0);
+            }
+        }else {
+            if (phase === 'PLAYING') {
+                    const presidentStarts = standings.president === 'player';
+                
+                    if (presidentStarts) {
+                        setCurrentTurn(0);
+                    } else {
+                        setCurrentTurn(1);
+                        handleOpponentTurn([]); 
+                    }
             }
         }
-
-        setPlayers(distributedPlayers);
     };
 
     // --- PLAYER ACTIONS ---
     const handleCardTap = (tappedCard: DeckType) => {
-        
+        // Only allow selecting cards if it is YOUR turn
+        const isMyTurn = isGamePhase === 'PLAYING' && currentTurn === 0;
+        const isExchanging = isGamePhase === 'EXCHANGE' && standings.president === 'player';
+
+        if (!isMyTurn && !isExchanging) return;
+
+        if(isExchanging){
+            const currentSelected = playerOneCards.filter(card => card.isSelected).length;
+
+            if (currentSelected >= 2 && !tappedCard.isSelected) {
+                Alert.alert("Let op", "Je mag maar 2 kaarten weggeven.");
+                return;
+            }
+        }
+
+        const updatedHand = playerOneCards.map(card => {
+            if (card.id === tappedCard.id) {
+                return { ...card, isSelected: !card.isSelected };
+            }
+            return card;
+        });
+        setPlayerOneCards(updatedHand);
     }
 
     const handlePlay = () => {
-        
+        if (currentTurn !== 0) return;
+
+        const selectedCards = playerOneCards.filter(card => card.isSelected);
+
+        const { isValid, message } = validateMove(selectedCards, pile);
+        if (!isValid) {
+            Alert.alert("Invalid Move", message);
+            return;
+        }
+
+        const remainingCards = playerOneCards.filter(card => !card.isSelected);
+        setPlayerOneCards(remainingCards);
+
+        if(remainingCards.length === 0){
+            setPile(selectedCards);
+
+            Alert.alert("Victory!", "You are the President!", [{
+                text: 'Play Again',
+                onPress: () => {
+                    setIsGamePhase('GAME_OVER');
+                    setStandings({
+                        president: 'player',
+                        shit: 'opponent'
+                    });
+                    
+                    startGame('EXCHANGE');
+                }
+            }]);
+            return;
+        }
+
+        const newPile = selectedCards;
+        const isBurn = selectedCards[0].power === POWER_2;
+
+        if (isBurn) {
+            setPile([]); 
+            setCurrentTurn(0); 
+        } else {
+            setPile(newPile);
+            setCurrentTurn(1);
+        }
     }
 
     const handlePassTurn = () => {
+        if (currentTurn !== 0) return;
 
+        Alert.alert("Pass", "You passed. Opponent wins this round and leads.");
+
+        setPile([]); 
+        setCurrentTurn(1);
     }
 
     // --- AI LOGIC ---
     const handleOpponentTurn = (currentPile: DeckType[]) => {
         
+        const cardsToPlay = getBestMove(playerTwoCards, currentPile);
+
+        if (cardsToPlay === null) {
+            // AI PASSES
+
+            Alert.alert("Round Over", "Opponent passed! It is your turn to lead.");
+            
+            setPile([]); 
+            setCurrentTurn(0);
+        }else {
+            //AI PLAYS
+
+            const isBurn = cardsToPlay[0].power === POWER_2;
+
+            // Update AI Hand
+            const playedCards = cardsToPlay.map(card => card.id);
+            const newHand = playerTwoCards.filter(card => !playedCards.includes(card.id));
+            setPlayerTwoCards(newHand);
+
+            if (newHand.length === 0) {
+                Alert.alert("Defeat", "Opponent is the President!", [{
+                    text: 'Try again',
+                    onPress: () => {
+                        setIsGamePhase('GAME_OVER')
+                        setStandings({
+                            president: 'opponent',
+                            shit: 'player'
+                        })
+                        startGame('EXCHANGE');
+                    }
+                }]);
+            }
+
+            setPile(cardsToPlay);
+            
+            if (isBurn) {
+                setCurrentTurn(0);
+            } else {
+                setCurrentTurn(0);
+            }
+        }
     };
 
     // --- EXCHANGE LOGIC ---
     const handleExchangeCards = () => {
-        
+        const result = executeExchange(
+            playerOneCards, 
+            playerTwoCards, 
+            standings.president === 'player'
+        );
+
+        if (!result.success || !result.newPlayerHand || !result.newOpponentHand) {
+            Alert.alert("Fout", result.message);
+            return;
+        }
+
+        // State Updates
+        setPlayerOneCards(result.newPlayerHand);
+        setPlayerTwoCards(result.newOpponentHand);
+        setIsGamePhase('PLAYING');
+
+        if (standings.shit === 'player') {
+            setCurrentTurn(0); 
+            Alert.alert("Start", "YOU'RE SHIT, YOU CAN START.");
+        } else {
+            setCurrentTurn(1);
+            Alert.alert("Start", "OPPONENT IS SHIT AND MAY START.");
+        }
     }
 
 
@@ -108,9 +241,9 @@ export default function Game(){
             <View style={styles.gameTable}>
                 
                 {/* OPPONENT AREA */}
-                {/* <View style={styles.opponentArea}>
+                <View style={styles.opponentArea}>
                     <Text>Opponent Cards: {playerTwoCards.length}</Text>
-                </View> */}
+                </View>
 
                 {/* PILE AREA (Middle) */}
                 {
@@ -185,7 +318,7 @@ export default function Game(){
 
                 {/* PLAYER AREA */}
                 <View style={styles.playerArea}>
-                    {/* <FlatList
+                    <FlatList
                         data={playerOneCards}
                         horizontal
                         showsHorizontalScrollIndicator={false}
@@ -197,7 +330,7 @@ export default function Game(){
                                 onPress={handleCardTap} 
                             />
                         )}
-                    /> */}
+                    />
                 </View>
                 
             </View>

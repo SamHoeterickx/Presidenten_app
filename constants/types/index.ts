@@ -1,2 +1,2 @@
 export { DeckType } from './deck.type';
-export { PlayerProps } from './player.type';
+export { PlayerProps, PlayerRoles } from './player.type';

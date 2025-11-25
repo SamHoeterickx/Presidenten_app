@@ -52,11 +52,12 @@ export default function Game(){
         if(currentPlayer.type === 'bot'){
             const timer = setTimeout(() => {
                 handleBotTurn();
-            }, 1000);
+            }, 2000);
 
             return () => clearTimeout(timer);
         }
     }, [currentTurn, isGamePhase, players, pile]);
+
 
     const startGame = (phase: 'INITIALIZING' | 'EXCHANGE' | 'PLAYING' | 'GAME_OVER') => {
 
@@ -69,14 +70,17 @@ export default function Game(){
             const shit = distributedPlayers.find(player => player.role === 'shit');
 
             if(shit){
-                setCurrentTurn(shit.id);
+                const shitIndex = distributedPlayers.findIndex(p => p.id === shit.id);
+                setCurrentTurn(shitIndex);
             }else{
-                const startingPlayer = distributedPlayers.find(player => player.hand.some(card => card.suit === 'spades' && card.rank === '3'));
+                const startingPlayerIndex = distributedPlayers.findIndex(player => player.hand.some(card => card.suit === 'spades' && card.rank === '3'));
+                
+                console.log(startingPlayerIndex);
 
-                if(startingPlayer){
-                    setCurrentTurn(startingPlayer.id);
+                if(startingPlayerIndex !== -1){
+                    setCurrentTurn(startingPlayerIndex);
                 }else{
-                    setCurrentTurn(1);
+                    setCurrentTurn(0);
                 }
             }
         }
@@ -87,58 +91,96 @@ export default function Game(){
 
     // --- PLAYER ACTIONS ---
     const handleCardTap = (tappedCard: DeckType) => {
+        const isMyTurn = isGamePhase === 'PLAYING' && currentTurn === 0;
+        // Voeg hier eventueel je exchange logica weer toe als je dat wilt ondersteunen
         
+        if (!isMyTurn) return;
+
+        setPlayers(currentPlayers => 
+            currentPlayers.map(player => {
+                // Zoek de speler die we moeten updaten (speler 0 / You)
+                if (player.id === 1) { // Of checken op index 0
+                    return {
+                        ...player, // Kopieer alle eigenschappen van de speler
+                        hand: player.hand.map(card => 
+                            card.id === tappedCard.id 
+                                ? { ...card, isSelected: !card.isSelected } // Toggle selectie
+                                : card
+                        )
+                    };
+                }
+                return player; // Andere spelers laten we met rust
+            })
+        );
     }
 
 
     // --- HANDLE PLAY ---
     const handlePlay = () => {
-        if(currentTurn !== 0) return
+        if (currentTurn !== 0) return;
 
         const currentPlayer = players[currentTurn];
         const selectedCards = currentPlayer.hand.filter(card => card.isSelected);
 
-        // --- CHECK OF MOVE IS VALID ---
         const { isValid, message } = validateMove(selectedCards, pile);
-        if(!isValid){
-            Alert.alert('Error', message,);
-            return
-        };
-
-
-        // --- UPDATE PILE ---
-        const newPile = selectedCards;
-        const isBurn = selectedCards[0].power === POWER_2;
-
-        const updatedPlayers = [...players];
-
-
-        // --- UPDATE HAND ---
-        const playedCards = selectedCards.map(card => card.id);
-        updatedPlayers[currentTurn].hand.filter(card => !playedCards.includes(card.id));
-
-
-        // --- CHECK OF PLAYER IS OUT ---
-        if(updatedPlayers[currentTurn].hand.length === 0){
-            const finishedPlayerCount = updatedPlayers.filter(player => player.finishedRank !== null).length;
-            updatedPlayers[currentTurn].finishedRank = finishedPlayerCount + 1;
-
-            Alert.alert("Gefeliciteerd!", `Je bent geëindigd als #${finishedPlayerCount + 1}!`);
+        if (!isValid) {
+            Alert.alert('Ongeldige Zet', message);
+            return;
         }
 
 
-        // --- CHANGE TURN & PILE UPDATE ---
-        if(isBurn){
-            setPile([]);
+        // --- UPDATE PLAYERS ---
+        const playedIds = selectedCards.map(card => card.id);
+        const isBurn = selectedCards[0].power === POWER_2; 
+        
 
-            if(updatedPlayers[currentTurn].hand.length > 0){
-                updatedPlayers.forEach(p => p.hasPassed = false);
-            }else{
-                const nextIndex = getNextActivePlayer(currentTurn, updatedPlayers);
-                setCurrentTurn(nextIndex)
+        const newHand = currentPlayer.hand.filter(card => !playedIds.includes(card.id));
+        const isOut = newHand.length === 0;
+
+
+        let newFinishedRank: number | null = currentPlayer.finishedRank;
+        if (isOut) {
+            const alreadyFinishedCount = players.filter(p => p.finishedRank !== null).length;
+            newFinishedRank = alreadyFinishedCount + 1;
+            Alert.alert("Gefeliciteerd!", `Je bent klaar! Rank: ${newFinishedRank}`);
+        }
+
+        const shouldResetPasses = isBurn;
+
+        const updatedPlayers = players.map(player => {
+
+            if (player.id === currentPlayer.id) {
+                return {
+                    ...player,
+                    hand: newHand,
+                    finishedRank: newFinishedRank,
+                    hasPassed: shouldResetPasses ? false : player.hasPassed
+                };
             }
-        }else{
-            setPile(newPile);
+            
+
+            if (shouldResetPasses) {
+                return { ...player, hasPassed: false };
+            }
+
+            return player;
+        });
+
+
+        // --- CHANGE TURN & PILE UPDATE ---
+        if (isBurn) {
+            
+            setTimeout(() => {
+                setPile([]);
+            }, 2000)
+
+            if (isOut) {
+                const nextIndex = getNextActivePlayer(currentTurn, updatedPlayers);
+                setCurrentTurn(nextIndex);
+            }
+
+        } else {
+            setPile(selectedCards); 
             
             const nextIndex = getNextActivePlayer(currentTurn, updatedPlayers);
             setCurrentTurn(nextIndex);
@@ -166,8 +208,8 @@ export default function Game(){
         if(activePlayersInRound.length <= 1){
             const winner = activePlayersInRound.length === 1 ? activePlayersInRound[0] : updatedPlayers[currentTurn];
 
-            Alert.alert("ROUND WON", `BY${winner.name}, AND MAY START AGAIN`);
-            startNewRound(winner.id, updatedPlayers);
+            const winnerIndex = updatedPlayers.findIndex(p => p.id === winner.id);
+            startNewRound(winnerIndex, updatedPlayers);
         }else {
             setPlayers(updatedPlayers);
 
@@ -224,7 +266,10 @@ export default function Game(){
 
             // --- CHANGE TURN & PILE UPDATE ---
             if(isBurn){
-                setPile([]);
+
+                setTimeout(() => {
+                    setPile([]);
+                }, 2000)
 
                 if(updatedPlayers[currentTurn].hand.length > 0){
                     updatedPlayers.forEach(player => player.hasPassed = false);
@@ -256,33 +301,55 @@ export default function Game(){
 
     return (
         <SafeAreaView style={styles.container}>
-            <View style={styles.gameTable}>
-                
-                {/* OPPONENT AREA */}
-                {/* <View style={styles.opponentArea}>
-                    <Text>Opponent Cards: {playerTwoCards.length}</Text>
-                </View> */}
+            
+            {/* --- TOP AREA --- */}
+            <View style={styles.topArea}>
+                <View>
+                    <Text style={styles.playerName}>{players[1].name}</Text>
+                    <Text style={styles.cardCount}>{players[1].hand.length}</Text>
+                    <Text style={styles.statusText}>{players[1].hasPassed ? "PAS" : ""}</Text>
+                </View>
+                <View>
+                    <Text style={styles.playerName}>{players[2].name}</Text>
+                    <Text style={styles.cardCount}>{players[2].hand.length}</Text>
+                    <Text style={styles.statusText}>{players[2].hasPassed ? "PAS" : ""}</Text>
+                </View>
+                <View>
+                    <Text style={styles.playerName}>{players[3].name}</Text>
+                    <Text style={styles.cardCount}>{players[3].hand.length}</Text>
+                    <Text style={styles.statusText}>{players[3].hasPassed ? "PAS" : ""}</Text>
+                </View>
+            </View>
 
-                {/* PILE AREA (Middle) */}
+
+            {/* THE PILE */}
+            <View style={styles.pileArea}>
+                {pile.length > 0 ? (
+                    <View>
+                        {pile.map((card, index) => (
+                            <View key={card.id} style={[styles.pileCard, { left: index * 20 }]}>
+                                <Card card={card} onPress={() => {}} /> 
+                            </View>
+                        ))}
+                    </View>
+                ) : (
+                    <Text style={styles.pileText}>Empty Pile</Text>
+                )}
+            </View>
+
+            {/* --- ACTION BUTTONS --- */}
+            <View style={styles.actionArea}>
+
                 {
                     isGamePhase === 'PLAYING' && (
-                        <View style={styles.pileArea}>
-                            {
-                                pile.length > 0 ? (
-                                    <View style={styles.pileContainer}>
-                                        {
-                                            pile.map((card, index) => (
-                                                <View key={card.id} style={[styles.pileCard, { left: index * 20 }]}>
-                                                    <Card card={card} onPress={() => {}} /> 
-                                                </View>
-                                            ))
-                                        }
-                                    </View>
-                                ) : (
-                                    <Text style={styles.pileText}>Empty Pile</Text>
-                                )
-                            }
-                        </View>
+                        <>
+                            <TouchableOpacity style={[styles.btn, styles.btnPass]} onPress={handlePassTurn}>
+                                <Text style={styles.btnText}>PASS</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={[styles.btn, styles.btnPlay]} onPress={handlePlay}>
+                                <Text style={styles.btnText}>PLAY</Text>
+                            </TouchableOpacity>
+                        </>
                     )
                 }
 
@@ -300,57 +367,21 @@ export default function Game(){
                         </View>
                     )
                 }
+            </View>
 
-                <View style={styles.actionArea}>
-                    {
-                        isGamePhase === 'PLAYING' && (
-                            <>
-                                <TouchableOpacity 
-                                    style={[styles.btn, styles.btnPass]} 
-                                    onPress={handlePassTurn}
-                                >
-                                    <Text style={styles.btnText}>PASS</Text>
-                                </TouchableOpacity>
-
-                                <TouchableOpacity 
-                                    style={[styles.btn, styles.btnPlay]} 
-                                    onPress={handlePlay}
-                                >
-                                    <Text style={styles.btnText}>PLAY SELECTED</Text>
-                                </TouchableOpacity>
-                            </>
-                        )
-                    }
-
-                    {
-                        isGamePhase === 'EXCHANGE' && (
-                            <TouchableOpacity 
-                                style={[styles.btn, styles.btnPlay]} 
-                                onPress={handleExchangeCards}
-                            >
-                                <Text style={styles.btnText}>EXCHANGE SELECTED CARDS</Text>
-                            </TouchableOpacity>
-                        )
-                    }
-                </View>
-
-                {/* PLAYER AREA */}
-                <View style={styles.playerArea}>
-                    {/* <FlatList
-                        data={playerOneCards}
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={{ paddingLeft: 20, paddingRight: 20, paddingTop: 20 }}
-                        keyExtractor={(item) => item.id}
-                        renderItem={({ item }) => (
-                            <Card
-                                card={item} 
-                                onPress={handleCardTap} 
-                            />
-                        )}
-                    /> */}
-                </View>
-                
+            {/* --- BOTTOM AREA --- */}
+            <View style={styles.playerArea}>
+                <Text style={styles.playerName}>Jij ({players[0].hasPassed ? "GEPAST" : "Aan de beurt"})</Text>
+                <FlatList
+                    data={players[0].hand}
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{ padding: 10 }}
+                    keyExtractor={(item) => item.id}
+                    renderItem={({ item }) => (
+                        <Card card={item} onPress={handleCardTap} />
+                    )}
+                />
             </View>
         </SafeAreaView>
     );
@@ -360,6 +391,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#35654d',
+        justifyContent: 'space-between'
     },
     gameTable: {
         flex: 1,
@@ -372,13 +404,12 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(255,255,255,0.1)',
     },
     pileArea: {
-        height: 200,
+        flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
-        borderWidth: 2,
-        borderColor: 'rgba(255,255,255,0.3)',
-        borderStyle: 'dashed',
-        borderRadius: 10,
+        flexWrap: 'wrap',
+        gap: 5,
+        height: '45%',
     },
     pileText: {
         color: 'white',
@@ -390,6 +421,7 @@ const styles = StyleSheet.create({
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
         minHeight: 150,
+        height: '25%'
     },
     actionArea: {
         flexDirection: 'row',
@@ -415,16 +447,8 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#333',
     },
-    // Styles to make the pile look good
-    pileContainer: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
     pileCard: {
-        // We use absolute positioning relative to the pile container
-        // so they stack on top of each other centered
-        transform: [{ scale: 0.8 }], // Make pile cards slightly smaller
+        transform: [{ scale: 1 }], 
     },
     exchangeTextContainer:{
         alignContent: 'center',
@@ -440,5 +464,30 @@ const styles = StyleSheet.create({
         fontSize: 18,
         textAlign: 'center',
         color: '#FFF'
+    },
+    topArea: {
+        marginHorizontal: 50,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        height: '20%', 
+    },
+    playerName: {
+        color: 'white',
+        fontWeight: 'bold',
+        fontSize: 12,
+        textAlign: 'center'
+    },
+    cardCount: {
+        color: '#FFD700',
+        fontSize: 16,
+        fontWeight: 'bold',
+        textAlign: 'center'
+    },
+    statusText: {
+        color: '#FF4444',
+        fontWeight: 'bold',
+        marginTop: 4,
+        textAlign: 'center'
     }
 });

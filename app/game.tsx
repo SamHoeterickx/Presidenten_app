@@ -9,7 +9,7 @@ import Card from "@/components/card/Card";
 import { dealNewGame, executeExchange, validateMove } from "@/constants/utils";
 
 //Types
-import { DeckType } from "@/constants/types";
+import { DeckType, PlayerProps } from "@/constants/types";
 import { getBestMove } from "@/constants/utils/ai";
 interface StandingProps {
     president: 'player' | 'opponent' | null,
@@ -21,8 +21,12 @@ const POWER_2 = 13;
 export default function Game(){
 
     // --- STATE ---
-    const [playerOneCards, setPlayerOneCards] = useState<DeckType[]>([]);
-    const [playerTwoCards, setPlayerTwoCards] = useState<DeckType[]>([]);
+    const [players, setPlayers] = useState<PlayerProps[]>([
+        {id: 1, type: 'human', name: 'You', hand: [], role: undefined, hasPassed: false},
+        {id: 2, type: 'bot', name: 'bot1', hand: [], role: undefined, hasPassed: false},
+        {id: 3, type: 'bot', name: 'bot2', hand: [], role: undefined, hasPassed: false},
+        {id: 4, type: 'bot', name: 'bot3', hand: [], role: undefined, hasPassed: false},
+    ]);
     const [pile, setPile] = useState<DeckType[]>([]);
     const [isGamePhase, setIsGamePhase] = useState<'INITIALIZING' | 'EXCHANGE' | 'PLAYING' | 'GAME_OVER'>('INITIALIZING');
     const [standings, setStandings] = useState<StandingProps>({

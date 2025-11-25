@@ -38,6 +38,15 @@ export default function Game(){
         startGame('PLAYING');
     }, []);
 
+    useEffect(() => {
+        if (currentTurn === 1 && isGamePhase === 'PLAYING') {
+            const timer = setTimeout(() => {
+                handleOpponentTurn(pile);
+            }, 1000);
+            return () => clearTimeout(timer);
+        }
+    }, [currentTurn, isGamePhase, pile, playerTwoCards]);
+
     const startGame = (phase: 'INITIALIZING' | 'EXCHANGE' | 'PLAYING' | 'GAME_OVER') => {
         const { playerOneCards, playerTwoCards } = dealNewGame();
         setPlayerOneCards(playerOneCards);
@@ -135,7 +144,6 @@ export default function Game(){
         } else {
             setPile(newPile);
             setCurrentTurn(1);
-            setTimeout(() => handleOpponentTurn(newPile), 1000);
         }
     }
 
@@ -146,8 +154,6 @@ export default function Game(){
 
         setPile([]); 
         setCurrentTurn(1);
-        
-        setTimeout(() => handleOpponentTurn([]), 1000);
     }
 
     // --- AI LOGIC ---
@@ -220,7 +226,6 @@ export default function Game(){
         } else {
             setCurrentTurn(1);
             Alert.alert("Start", "OPPONENT IS SHIT AND MAY START.");
-            setTimeout(() => handleOpponentTurn([]), 1500);
         }
     }
 

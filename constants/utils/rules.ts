@@ -55,7 +55,7 @@ export const validateMove = (selectedCards:DeckType[], pile:DeckType[]): Validat
 
     //RULE C: You always need to lay a higher card except when the card is a 7
     if (pilePower === POWER_7) {
-        if (playPower >= POWER_7 && playPower !== POWER_2) {
+        if (playPower >= POWER_7 && playPower === POWER_2) {
             return { 
                 isValid: false, 
                 message: "A 7 forces you to play lower!" 

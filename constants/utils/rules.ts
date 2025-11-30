@@ -53,19 +53,18 @@ export const validateMove = (selectedCards:DeckType[], pile:DeckType[]): Validat
         };
     }
 
-    //RULE C: You always need to lay a higher card except when the card is a 7
     if (pilePower === POWER_7) {
-        if (playPower >= POWER_7 && playPower === POWER_2) {
+        if (playPower >= POWER_7) {
             return { 
                 isValid: false, 
                 message: "A 7 forces you to play lower!" 
             };
         }
-    }else {
+    } else {
         if (playPower <= pilePower && playPower !== POWER_2) {
             return { 
                 isValid: false, 
-                message: `You must play a card higher then ${selectedCards[0].rank}`
+                message: `You must play a card higher then ${pile[0].rank}`
             };
         }
     }

@@ -80,7 +80,7 @@ export default function Game(){
             }else{
                 const startingPlayerIndex = distributedPlayers.findIndex(player => player.hand.some(card => card.suit === 'spades' && card.rank === '3'));
                 
-                console.log(startingPlayerIndex);
+                // console.log(startingPlayerIndex);
 
                 if(startingPlayerIndex !== -1){
                     setCurrentTurn(startingPlayerIndex);

@@ -102,9 +102,9 @@ export const executeExchange = (playerHand:DeckType[], opponentHand:DeckType[], 
     newPlayerHand = sortCards(newPlayerHand).map(card => ({ ...card, isSelected: false }));
     newOpponentHand = sortCards(newOpponentHand);
 
-    console.log(opponentHand)
-    console.log(opponentGivenIds);
-    console.log(newOpponentHand)
+    // console.log(opponentHand)
+    // console.log(opponentGivenIds);
+    // console.log(newOpponentHand)
 
 
     return { 

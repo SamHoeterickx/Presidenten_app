@@ -37,7 +37,7 @@ export const getBestMove = (hand:DeckType[], pile:DeckType[]): DeckType[]| null 
             const amountToPlay = validAmounts[randomIndex];
             const selection = group.slice(0, amountToPlay);
 
-            console.log(amountToPlay);
+            // console.log(amountToPlay);
         
             const check = validateMove(selection, pile);
             if (check.isValid) {

@@ -18,8 +18,10 @@ interface StandingProps {
 }
 
 //Styles
-import { styles } from './game.styles';
+import { baseStyles, gameStyles } from "@/styles";
 
+
+//Const
 const POWER_2 = 13;
 const roles = ['President', 'Vice President', 'Vice Shit', 'Shit'];
 
@@ -434,56 +436,56 @@ export default function Game(){
     if(isGamePhase === 'INITIALIZING') return <SafeAreaView><Text>Shuffeling cards...</Text></SafeAreaView>
 
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={baseStyles.container}>
 
             {/* --- TOP VIEW --- */}
-            <View style={ styles.opponentContainer }>
-               <View style={ styles.opponentWrapper }>
-                    <Text style={styles.playerName}>{players[1].name}</Text>
-                    <Text style={styles.cardCount}>{players[1].hand.length}</Text>
+            <View style={ gameStyles.opponentContainer }>
+               <View style={ gameStyles.opponentWrapper }>
+                    <Text style={gameStyles.playerName}>{players[1].name}</Text>
+                    <Text style={gameStyles.cardCount}>{players[1].hand.length}</Text>
                     {
                         currentTurn === 1 ? (
-                            <Text style={styles.turnText}>TURN</Text>
+                            <Text style={gameStyles.turnText}>TURN</Text>
                         ) : players[1].hasPassed ?(
-                            <Text style={styles.turnText}>PASS</Text>
+                            <Text style={gameStyles.turnText}>PASS</Text>
                         ) : <></>
                     }
                 </View>
-                <View style={ styles.opponentWrapper }>
-                    <Text style={styles.playerName}>{players[2].name}</Text>
-                    <Text style={styles.cardCount}>{players[2].hand.length}</Text>
+                <View style={ gameStyles.opponentWrapper }>
+                    <Text style={gameStyles.playerName}>{players[2].name}</Text>
+                    <Text style={gameStyles.cardCount}>{players[2].hand.length}</Text>
                     {
                         currentTurn === 2 ? (
-                            <Text style={styles.turnText}>TURN</Text>
+                            <Text style={gameStyles.turnText}>TURN</Text>
                         ) : players[2].hasPassed ?(
-                            <Text style={styles.turnText}>PASS</Text>
+                            <Text style={gameStyles.turnText}>PASS</Text>
                         ) : <></>
                     }
                 </View>
-                <View style={ styles.opponentWrapper }>
-                    <Text style={styles.playerName}>{players[3].name}</Text>
-                    <Text style={styles.cardCount}>{players[3].hand.length}</Text>
+                <View style={ gameStyles.opponentWrapper }>
+                    <Text style={gameStyles.playerName}>{players[3].name}</Text>
+                    <Text style={gameStyles.cardCount}>{players[3].hand.length}</Text>
                     {
                         currentTurn === 3 ? (
-                            <Text style={styles.turnText}>TURN</Text>
+                            <Text style={gameStyles.turnText}>TURN</Text>
                         ) : players[3].hasPassed ?(
-                            <Text style={styles.turnText}>PASS</Text>
+                            <Text style={gameStyles.turnText}>PASS</Text>
                         ) : <></>
                     }
                 </View>
             </View>
 
             {/* --- PILE + ACTION BUTTONS --- */}
-            <View style={styles.midContainer }>
+            <View style={gameStyles.midContainer }>
 
                 {/* --- PILE --- */}
-                <View style={ styles.pileContainer } >
+                <View style={ gameStyles.pileContainer } >
                     {
                         isGamePhase === 'PLAYING' && pile.length > 0 && (
                             <>
                                 {
                                     pile.map((card, index) => (
-                                        <View key={card.id} style={styles.pileCard}>
+                                        <View key={card.id} style={gameStyles.pileCard}>
                                             <Card card={card} onPress={() => {}} /> 
                                         </View>
                                     ))
@@ -493,13 +495,13 @@ export default function Game(){
                     }
                     {
                         isGamePhase === 'EXCHANGE' && (
-                            <View style={ styles.exchangeCardInfoContainer} >
-                                <Text style={ styles.exchangeHeading }>EXCHANGE CARDS</Text>
+                            <View style={ gameStyles.exchangeCardInfoContainer} >
+                                <Text style={ gameStyles.exchangeHeading }>EXCHANGE CARDS</Text>
                                 {
                                     standings.presidentId === players[0].id ? (
-                                        <Text style={ styles.exchangeText } >{ `YOU ARE THE PRESIDENT, GIVE YOUR 2 WORST CARDS TO ${standings.presidentId && players[standings.presidentId].name.toUpperCase()}` }</Text>
+                                        <Text style={ gameStyles.exchangeText } >{ `YOU ARE THE PRESIDENT, GIVE YOUR 2 WORST CARDS TO ${standings.presidentId && players[standings.presidentId].name.toUpperCase()}` }</Text>
                                     ):(
-                                        <Text style={ styles.exchangeText } >{ `YOU ARE THE SHIT, GIVE YOUR 2 BEST CARDS TO ${standings.shitId && players[standings.shitId].name.toUpperCase()}` }</Text>
+                                        <Text style={ gameStyles.exchangeText } >{ `YOU ARE THE SHIT, GIVE YOUR 2 BEST CARDS TO ${standings.shitId && players[standings.shitId].name.toUpperCase()}` }</Text>
                                     )
                                 }
                             </View>
@@ -508,23 +510,23 @@ export default function Game(){
                 </View>
 
                 {/* --- ACTION BUTTONS --- */}
-                <View style={ styles.actionButtonContainer } >
+                <View style={ gameStyles.actionButtonContainer } >
                     {
                         isGamePhase === 'PLAYING' && (
                             <>
                                 <TouchableOpacity 
-                                    style={[styles.button, styles.btnPass]} 
+                                    style={[gameStyles.button, gameStyles.btnPass]} 
                                     onPress={handlePassTurn}
                                     disabled={ players[0].hasPassed }
                                 >
-                                    <Text style={styles.btnText}>PASS</Text>
+                                    <Text style={gameStyles.btnText}>PASS</Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity 
-                                    style={[styles.button, styles.btnPlay]} 
+                                    style={[gameStyles.button, gameStyles.btnPlay]} 
                                     onPress={handlePlay}
                                     disabled={ players[0].hasPassed }
                                 >
-                                    <Text style={styles.btnText}>PLAY</Text>
+                                    <Text style={gameStyles.btnText}>PLAY</Text>
                                 </TouchableOpacity>
                             </>
                         )
@@ -533,10 +535,10 @@ export default function Game(){
                     {
                         isGamePhase === 'EXCHANGE' && (
                             <>
-                                <TouchableOpacity style={[styles.button]} disabled>
+                                <TouchableOpacity style={[gameStyles.button]} disabled>
                                 </TouchableOpacity>
-                                <TouchableOpacity style={[styles.button, styles.btnPlay]} onPress={handleExchangeCards}>
-                                    <Text style={styles.btnText}>EXCHANGE CARDS</Text>
+                                <TouchableOpacity style={[gameStyles.button, gameStyles.btnPlay]} onPress={handleExchangeCards}>
+                                    <Text style={gameStyles.btnText}>EXCHANGE CARDS</Text>
                                 </TouchableOpacity>
                             </>
                         )
@@ -547,25 +549,25 @@ export default function Game(){
             </View>
 
             {/* --- PLAYERS HAND --- */}
-            <View style={ styles.playerHandContainer }>
+            <View style={ gameStyles.playerHandContainer }>
                 
                 {
                     currentTurn === 0 ? (
-                        <View style={ styles.playerStatusWrapper} >
-                            <Text style={styles.playerName}>YOUR TURN</Text>
+                        <View style={ gameStyles.playerStatusWrapper} >
+                            <Text style={gameStyles.playerName}>YOUR TURN</Text>
                         </View>
                     ) : players[0].hasPassed ? (
-                        <View style={ styles.playerStatusWrapper} >
-                            <Text style={styles.playerName}>PASS</Text>
+                        <View style={ gameStyles.playerStatusWrapper} >
+                            <Text style={gameStyles.playerName}>PASS</Text>
                         </View>
-                    ) : ( <View style={ styles.playerStatusWrapper} >
-                            <Text style={styles.playerName}></Text>
+                    ) : ( <View style={ gameStyles.playerStatusWrapper} >
+                            <Text style={gameStyles.playerName}></Text>
                         </View> 
                     )
                 }
-                <View style={ styles.handWrapper }>
+                <View style={ gameStyles.handWrapper }>
                     <FlatList
-                        style={ styles.playerHand }
+                        style={ gameStyles.playerHand }
                         data={players[0].hand}
                         horizontal
                         showsHorizontalScrollIndicator={false}
